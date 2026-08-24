@@ -40,10 +40,9 @@ class TeacherBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     const items = [
       (Icons.home_outlined, 'Accueil'),
-      (Icons.groups_outlined, 'Classes'),
       (Icons.chat_bubble_outline_rounded, 'Messages'),
       (Icons.event_note_outlined, 'Absences'),
-      (Icons.more_horiz_rounded, 'Plus'),
+      (Icons.person_outline_rounded, 'Profil'),
     ];
     return SafeArea(
       top: false,
@@ -65,7 +64,7 @@ class TeacherBottomNav extends StatelessWidget {
                   children: [
                     Stack(clipBehavior: Clip.none, children: [
                       Icon(item.$1, color: selected ? TeacherUi.blue : TeacherUi.muted, size: 22),
-                      if (index == 2)
+                      if (index == 1)
                         Positioned(
                           right: -7,
                           top: -7,

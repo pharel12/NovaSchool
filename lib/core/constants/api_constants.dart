@@ -212,5 +212,10 @@ class ApiConstants {
   // HEALTH CHECK
   // ===========================================================================
   static String get health => "$baseUrl/health/";
-}
 
+  // ===========================================================================
+  // AGENDA PARENT
+  // ===========================================================================
+  static String get parentAgenda => "$baseUrl/agenda/";
+  static String parentAgendaDetail(int eventId) => "$baseUrl/agenda/$eventId/";
+}

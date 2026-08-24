@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_assets.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/teacher/teacher_ui.dart';
-import 'teacher_chat_list_screen.dart';
-import 'teacher_mark_absence_screen.dart';
+import '../teacher/teacher_chat_list_screen.dart';
+import '../teacher/teacher_mark_absence_screen.dart';
+import '../profile/profile_screen.dart';
 
 class TeacherHomeScreen extends StatelessWidget {
   const TeacherHomeScreen({super.key});
@@ -13,7 +16,7 @@ class TeacherHomeScreen extends StatelessWidget {
 
   void _navigate(BuildContext context, int index) {
     switch (index) {
-      case 2:
+      case 1:
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -22,13 +25,17 @@ class TeacherHomeScreen extends StatelessWidget {
         );
         break;
 
-      case 3:
+      case 2:
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => const TeacherMarkAbsenceScreen(),
           ),
         );
+        break;
+
+      case 3:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
         break;
 
       default:
@@ -106,10 +113,10 @@ class TeacherHomeScreen extends StatelessWidget {
 
         const SizedBox(width: 15),
 
-        const Icon(
-          Icons.auto_awesome_mosaic_rounded,
-          color: TeacherUi.blue,
-          size: 23,
+        Image.asset(
+          AppAssets.logo,
+          width: 23,
+          height: 23,
         ),
 
         const SizedBox(width: 6),
@@ -169,19 +176,22 @@ class TeacherHomeScreen extends StatelessWidget {
   // ============================================================
 
   Widget _buildWelcome() {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Bonjour, M. Dupont 👋',
-          style: TextStyle(
+        FutureBuilder(
+          future: AuthService().getProfile(),
+          builder: (context, snapshot) => Text(
+            'Bonjour, ${snapshot.data?.username ?? 'Professeur'} 👋',
+            style: const TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.w800,
             color: TeacherUi.ink,
+            ),
           ),
         ),
 
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
 
         Text(
           "Voici un aperçu de votre activité aujourd'hui.",

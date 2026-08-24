@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_assets.dart';
 import '../../services/storage_service.dart';
 import '../auth/login_screen.dart';
-import '../home/home_screen.dart';
+import '../home/parent_home_screen.dart';
 
 /// Écran de démarrage premium avec animation de transition.
 /// Affiche le logo et le nom de l'application avant de diriger vers l'écran de connexion.

@@ -4,7 +4,8 @@ import '../../models/child_model.dart';
 import '../../services/teacher_service.dart';
 import '../../widgets/teacher/teacher_ui.dart';
 import 'teacher_chat_list_screen.dart';
-import 'teacher_home_screen.dart';
+import '../home/teacher_home_screen.dart';
+import '../profile/profile_screen.dart';
 
 class TeacherMarkAbsenceScreen extends StatefulWidget {
   const TeacherMarkAbsenceScreen({super.key});
@@ -53,13 +54,17 @@ class _TeacherMarkAbsenceScreenState
         );
         break;
 
-      case 2:
+      case 1:
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => const TeacherChatListScreen(),
           ),
         );
+        break;
+
+      case 3:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
         break;
 
       default:
@@ -145,7 +150,7 @@ class _TeacherMarkAbsenceScreenState
       // ----------------------------------------------------------
 
       bottomNavigationBar: TeacherBottomNav(
-        currentIndex: 3,
+        currentIndex: 2,
         onTap: _navigate,
       ),
 

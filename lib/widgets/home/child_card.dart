@@ -26,18 +26,18 @@ class ChildCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(15),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        width: 240,
-        padding: const EdgeInsets.all(18),
+        width: 210,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: selected ? primaryOrange : (isDark ? Colors.grey[800]! : Colors.transparent),
-            width: 2,
+            color: isPresent ? const Color(0xFF9FE0B4) : const Color(0xFFFFB4B8),
+            width: selected ? 2 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
@@ -103,7 +103,7 @@ class ChildCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
+                color: isDark ? Colors.white : const Color(0xFF111827),
               ),
             ),
             const SizedBox(height: 4),
@@ -120,13 +120,13 @@ class ChildCard extends StatelessWidget {
                 Icon(
                   Icons.visibility_outlined,
                   size: 18,
-                  color: isDark ? Colors.white70 : primaryBlue,
+                  color: isDark ? Colors.white70 : const Color(0xFF155EEF),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   "Voir le profil",
                   style: TextStyle(
-                    color: isDark ? Colors.white70 : primaryBlue,
+                    color: isDark ? Colors.white70 : const Color(0xFF155EEF),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -134,7 +134,7 @@ class ChildCard extends StatelessWidget {
                 const Icon(
                   Icons.arrow_forward_ios,
                   size: 14,
-                  color: primaryOrange,
+                  color: const Color(0xFF667085),
                 ),
               ],
             )

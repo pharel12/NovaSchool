@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../services/teacher_service.dart';
 import '../../widgets/teacher/teacher_ui.dart';
 import 'teacher_chat_screen.dart';
-import 'teacher_home_screen.dart';
+import '../home/teacher_home_screen.dart';
 import 'teacher_mark_absence_screen.dart';
+import '../profile/profile_screen.dart';
 
 class TeacherChatListScreen extends StatefulWidget {
   const TeacherChatListScreen({super.key});
@@ -53,13 +54,17 @@ class _TeacherChatListScreenState
         );
         break;
 
-      case 3:
+      case 2:
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => const TeacherMarkAbsenceScreen(),
           ),
         );
+        break;
+
+      case 3:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
         break;
 
       default:
@@ -167,7 +172,7 @@ class _TeacherChatListScreenState
       // ----------------------------------------------------------
 
       bottomNavigationBar: TeacherBottomNav(
-        currentIndex: 2,
+        currentIndex: 1,
         onTap: _navigate,
       ),
 
@@ -179,7 +184,6 @@ class _TeacherChatListScreenState
         child: Column(
           children: [
             _buildHeader(),
-            _buildTabs(),
             _buildSearchField(),
             _buildConversations(),
           ],
@@ -223,7 +227,7 @@ class _TeacherChatListScreenState
           // ------------------------------------------------------
 
           const Text(
-            'Messages',
+            'Parents',
             style: TextStyle(
               fontSize: 19,
               color: TeacherUi.ink,
@@ -259,43 +263,6 @@ class _TeacherChatListScreenState
         Icons.edit_outlined,
         color: Colors.white,
         size: 20,
-      ),
-    );
-  }
-
-  // ============================================================
-  // ONGLETS
-  // ============================================================
-
-  Widget _buildTabs() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: 16,
-      ),
-      child: Row(
-        mainAxisAlignment:
-        MainAxisAlignment.spaceBetween,
-        children: [
-          _Tab(
-            'Tous',
-            true,
-          ),
-
-          _Tab(
-            'Parents',
-            false,
-          ),
-
-          _Tab(
-            'Élèves',
-            false,
-          ),
-
-          _Tab(
-            'Non lus  2',
-            false,
-          ),
-        ],
       ),
     );
   }
@@ -526,53 +493,6 @@ class _TeacherChatListScreenState
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ============================================================================
-// ONGLET
-// ============================================================================
-
-class _Tab extends StatelessWidget {
-  final String label;
-  final bool active;
-
-  const _Tab(
-      this.label,
-      this.active,
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(
-        bottom: 11,
-      ),
-
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: active
-                ? TeacherUi.blue
-                : Colors.transparent,
-            width: 2,
-          ),
-        ),
-      ),
-
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: active
-              ? FontWeight.w700
-              : FontWeight.w500,
-          color: active
-              ? TeacherUi.blue
-              : TeacherUi.muted,
-        ),
       ),
     );
   }

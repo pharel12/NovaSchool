@@ -15,21 +15,17 @@ class HomeBottomNav extends StatelessWidget {
     const primaryBlue = Color(0xFF0D47A1);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
         boxShadow: const [
           BoxShadow(
             color: Colors.black12,
-            blurRadius: 20,
-            offset: Offset(0, 5),
+            blurRadius: 10,
+            offset: Offset(0, -2),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(25),
-        child: BottomNavigationBar(
+      child: BottomNavigationBar(
           currentIndex: currentIndex,
           onTap: onTap,
           type: BottomNavigationBarType.fixed,
@@ -61,7 +57,6 @@ class HomeBottomNav extends StatelessWidget {
               label: "Profil",
             ),
           ],
-        ),
       ),
     );
   }

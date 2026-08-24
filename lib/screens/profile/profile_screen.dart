@@ -11,9 +11,9 @@ import '../auth/login_screen.dart';
 
 /// Page "Mon Profil"
 class ProfileScreen extends StatefulWidget {
-  final String accessToken;
+  final String? accessToken;
 
-  const ProfileScreen({super.key, required this.accessToken});
+  const ProfileScreen({super.key, this.accessToken});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -232,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children:[
                         Icon(
                           Icons.people_alt_rounded,
                           size: 14,
@@ -240,7 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         SizedBox(width: 5),
                         Text(
-                          'Parent',
+                          profile?.role == true ? 'Enseignant' : 'Parent',
                           style: TextStyle(
                             color: primaryBlue,
                             fontWeight: FontWeight.bold,

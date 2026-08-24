@@ -112,8 +112,11 @@ class ChatScreen extends StatefulWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFD),
         appBar: AppBar(
-          elevation: 1,
+          elevation: 0,
+          backgroundColor: const Color(0xFF123D92),
+          foregroundColor: Colors.white,
           titleSpacing: 0,
           title: Row(
             children: [
@@ -135,13 +138,14 @@ class ChatScreen extends StatefulWidget {
                       style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                       ),
                     ),
                     Text(
                       widget.teacher.courses.isNotEmpty
                         ? widget.teacher.courses.first.courseName
                         : "Enseignant",
-                      style: const TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 12, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -179,10 +183,8 @@ class ChatScreen extends StatefulWidget {
                         maxWidth: MediaQuery.of(context).size.width * .75,
                       ),
                       decoration: BoxDecoration(
-                        color: isMe
-                        ? Colors.blue
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(15),
+                        color: isMe ? const Color(0xFFE2EAFF) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -190,9 +192,7 @@ class ChatScreen extends StatefulWidget {
                           Text(
                             msg["content"],
                             style: TextStyle(
-                              color: isMe
-                              ? Colors.white
-                                  : Colors.black87,
+                              color: Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 5),
@@ -207,7 +207,8 @@ class ChatScreen extends StatefulWidget {
 
             SafeArea(
             child: Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+            decoration: const BoxDecoration(color: Colors.white),
             child: Row(
             children: [
             Expanded(
@@ -215,9 +216,10 @@ class ChatScreen extends StatefulWidget {
             controller: _messageController,
             decoration: InputDecoration(
             hintText: "Votre message...",
-            border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            ),
+            filled: true,
+            fillColor: const Color(0xFFFDFDFF),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFE1E5EE))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFE1E5EE))),
             contentPadding:
             const EdgeInsets.symmetric(horizontal: 20),
             ),
@@ -228,8 +230,9 @@ class ChatScreen extends StatefulWidget {
 
             CircleAvatar(
             radius: 25,
+            backgroundColor: const Color(0xFF1E5FE8),
             child: IconButton(
-            icon: const Icon(Icons.send),
+            icon: const Icon(Icons.send, color: Colors.white),
             onPressed: _sendMessage,
             ),
             )

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/child_model.dart';
-import '../../screens/students/child_profile_screen.dart';
+import '../../screens/parent/child_profile_screen.dart';
 import 'package:novaschool/services/child_service.dart';
 import 'child_card.dart';
 
@@ -76,7 +76,7 @@ class _ChildListState extends State<ChildList> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: children.length,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.zero,
             itemBuilder: (context, index) {
               final child = children[index];
 

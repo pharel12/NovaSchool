@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:novaschool/screens/dashboard_screen/dashboard_screen.dart';
 import 'package:novaschool/screens/message/teachers_screen.dart';
-import 'package:novaschool/screens/teacher/teacher_home_screen.dart';
+import 'package:novaschool/screens/home/teacher_home_screen.dart';
 import 'package:novaschool/services/auth_service.dart';
 import '../../models/user_model.dart';
 
 import '../../widgets/home/bottom_nav.dart';
 import '../profile/profile_screen.dart';
+import '../parent/parent_agenda_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accessToken;
@@ -53,21 +54,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xffF8FAFC),
-      bottomNavigationBar: HomeBottomNav(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-        },
-      ),
+      // L'enseignant possède sa propre navigation dans son espace dédié.
+      // La barre réservée aux parents ne doit donc pas apparaître ici.
+      bottomNavigationBar: isTeacher
+          ? null
+          : HomeBottomNav(
+              currentIndex: currentIndex,
+              onTap: (index) {
+                setState(() {
+                  currentIndex = index;
+                });
+              },
+            ),
       body: IndexedStack(
         index: currentIndex,
         children: [
           isTeacher 
               ? const TeacherHomeScreen() 
               : DashboardScreen(accessToken: widget.accessToken),
-          // AgendaPage(),
+          const ParentAgendaScreen(),
           const TeachersScreen(),
           ProfileScreen(accessToken: widget.accessToken),
         ],

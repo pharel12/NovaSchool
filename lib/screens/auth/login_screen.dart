@@ -8,7 +8,7 @@ import '../../widgets/auth/social_login_button.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../core/validators/form_validators.dart';
-import '../home/home_screen.dart';
+import '../home/parent_home_screen.dart';
 
 /// Écran de connexion premium avec validation de formulaire et authentification.
 class LoginScreen extends StatefulWidget {
