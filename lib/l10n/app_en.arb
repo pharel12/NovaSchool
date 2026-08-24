@@ -1,0 +1,22 @@
+{
+  "@@locale": "en",
+  "profileTitle": "My Profile",
+  "profileSubtitle": "Manage your information and preferences",
+  "quickAccess": "Quick Access",
+  "myChildren": "My children",
+  "agenda": "Agenda",
+  "messages": "Messages",
+  "attendance": "Attendance",
+  "preferences": "Preferences",
+  "language": "Language",
+  "languageDesc": "Choose your preferred language",
+  "theme": "Theme",
+  "themeDesc": "Customize the app's appearance",
+  "light": "Light",
+  "dark": "Dark",
+  "system": "System",
+  "account": "Account",
+  "accountInfo": "Account information",
+  "changePassword": "Change password",
+  "logout": "Log out"
+}
