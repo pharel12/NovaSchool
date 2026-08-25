@@ -208,6 +208,13 @@ class ApiConstants {
     return "$baseUrl/children/$id/timetable/";
   }
 
+  /// Emploi du temps enrichi : période (day/week/month) et date de référence.
+  static String studentTimeTable(String id, {required String period, String? date}) {
+    final query = <String>['period=$period'];
+    if (date != null) query.add('date=$date');
+    return "$baseUrl/timetable/student/$id/?${query.join('&')}";
+  }
+
   // ===========================================================================
   // HEALTH CHECK
   // ===========================================================================

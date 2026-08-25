@@ -121,14 +121,14 @@ class _ChildNotesScreenState extends State<ChildNotesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF8FAFD),
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: const Color(0xFF155EEF),
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
         title: const Text(
           'Toutes les notes',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
         ),
         actions: [
           IconButton(

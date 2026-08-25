@@ -105,16 +105,16 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFFF8FAFD),
       appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: const Color(0xFF155EEF),
         elevation: 0,
-        foregroundColor: isDark ? Colors.white : Colors.black,
+        foregroundColor: Colors.white,
         title: Text(
           "Mon enfant",
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black,
+            color: Colors.white,
           ),
         ),
         actions: [
@@ -124,7 +124,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
               IconButton(
                 icon: Icon(
                   Icons.notifications_none_rounded,
-                  color: isDark ? Colors.white70 : Colors.black87,
+                  color: Colors.white,
                 ),
                 onPressed: () {},
               ),

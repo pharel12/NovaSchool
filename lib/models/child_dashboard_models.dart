@@ -170,13 +170,15 @@ class CoursSlot {
   factory CoursSlot.fromJson(Map<String, dynamic> json) {
     final course = json["course_id"] as List?;
     final teacher = json["teacher_id"] as List?;
+    final courseInfo = json['course'] as Map?;
+    final teacherInfo = json['teacher'] as Map?;
 
     return CoursSlot(
       id: json["id"] ?? 0,
-      courseId: course != null ? course.first as int : 0,
-      courseName: course != null ? course.last.toString() : "",
-      teacherId: teacher != null ? teacher.first as int : null,
-      teacherName: teacher != null ? teacher.last.toString() : null,
+      courseId: course != null ? course.first as int : (courseInfo?['id'] as int? ?? 0),
+      courseName: course != null ? course.last.toString() : (courseInfo?['name']?.toString() ?? json['name']?.toString() ?? ''),
+      teacherId: teacher != null ? teacher.first as int : teacherInfo?['id'] as int?,
+      teacherName: teacher != null ? teacher.last.toString() : teacherInfo?['name']?.toString(),
       day: json["day"]?.toString() ?? "",
       startTime: json["start_time"]?.toString() ?? "",
       endTime: json["end_time"]?.toString() ?? "",
@@ -230,9 +232,13 @@ class TimetableData {
   });
 
   factory TimetableData.fromJson(Map<String, dynamic> json) {
-    final student = json["student"] as Map?;
-    final timetableInfo = json["timetable"] as Map?;
-    final slots = (json["slots"] as List? ?? const [])
+    // StudentTimetableView enveloppe le planning dans { success, data, filters }.
+    final payload = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : json;
+    final student = payload["student"] as Map?;
+    final timetableInfo = payload["timetable"] as Map?;
+    final slots = (payload["slots"] as List? ?? const [])
         .whereType<Map>()
         .map((slot) => CoursSlot.fromJson(Map<String, dynamic>.from(slot)))
         .toList();

@@ -93,10 +93,18 @@ class ChildService {
   /// 
   /// Retour: {"days": {"lundi": [...], ...}, "timetable": {...}}
   Future<TimetableData> getChildTimeTable(
-      String childId,
-      ) async {
+      String childId, {
+        String period = 'week',
+        DateTime? selectedDate,
+      }) async {
     final response = await _apiClient.get(
-      ApiConstants.childTimeTable(childId),
+      ApiConstants.studentTimeTable(
+        childId,
+        period: period,
+        date: selectedDate == null
+            ? null
+            : '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+      ),
     );
 
     if (response.statusCode != 200) {

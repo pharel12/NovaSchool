@@ -92,8 +92,12 @@ class _ChildPaymentsScreenState extends State<ChildPaymentsScreen> {
       ..sort((a, b) => b.invoiceDate.compareTo(a.invoiceDate));
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFD),
       appBar: AppBar(
-        title: const Text('Toutes les factures'),
+        backgroundColor: const Color(0xFF155EEF),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('Toutes les factures', style: TextStyle(fontWeight: FontWeight.w800)),
         actions: [
           IconButton(
             onPressed: _chooseAcademicYear,

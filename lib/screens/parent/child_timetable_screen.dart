@@ -31,7 +31,8 @@ class _ChildTimeTableScreenState extends State<ChildTimeTableScreen> {
   String? _errorMessage;
   String? _selectedDay; // Le jour sélectionné (Lundi, Mardi...)
   String _searchQuery = "";
-  TimetablePeriod _selectedPeriod = TimetablePeriod.day;
+  TimetablePeriod _selectedPeriod = TimetablePeriod.week;
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -67,7 +68,11 @@ class _ChildTimeTableScreenState extends State<ChildTimeTableScreen> {
     });
 
     try {
-      final data = await _childService.getChildTimeTable(widget.childId);
+      final data = await _childService.getChildTimeTable(
+        widget.childId,
+        period: _selectedPeriod.name,
+        selectedDate: _selectedDate,
+      );
       if (!mounted) return;
       setState(() {
         _timetableData = data;
@@ -81,6 +86,18 @@ class _ChildTimeTableScreenState extends State<ChildTimeTableScreen> {
         _errorMessage = "Impossible de charger l'emploi du temps.";
       });
     }
+  }
+
+  Future<void> _pickDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+    if (date == null) return;
+    setState(() => _selectedDate = date);
+    await _fetchTimetable();
   }
 
   String _getCurrentDayInFrench() {
@@ -140,31 +157,38 @@ class _ChildTimeTableScreenState extends State<ChildTimeTableScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFFF8FAFD),
       appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: const Color(0xFF155EEF),
         elevation: 0,
-        foregroundColor: isDark ? Colors.white : Colors.black,
-        title: const Text("Emploi du temps", style: TextStyle(fontWeight: FontWeight.bold)),
+        foregroundColor: Colors.white,
+        title: const Text("Emploi du temps", style: TextStyle(fontWeight: FontWeight.w800)),
         actions: [
           // Menu de filtrage par période (Comme dans Absences)
           PopupMenuButton<TimetablePeriod>(
             icon: const Icon(Icons.filter_list_rounded),
-            onSelected: (period) => setState(() => _selectedPeriod = period),
+            onSelected: (period) {
+              setState(() => _selectedPeriod = period);
+              _fetchTimetable();
+            },
             itemBuilder: (context) => const [
               PopupMenuItem(value: TimetablePeriod.day, child: Text('Aujourd\'hui')),
               PopupMenuItem(value: TimetablePeriod.week, child: Text('Cette semaine')),
               PopupMenuItem(value: TimetablePeriod.month, child: Text('Ce mois-ci')),
             ],
           ),
-          Container(
+          InkWell(
+            onTap: _pickDate,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.12),
+              color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.calendar_month, color: AppColors.secondary),
+            child: const Icon(Icons.calendar_month, color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -189,6 +213,8 @@ class _ChildTimeTableScreenState extends State<ChildTimeTableScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildPeriodTabs(),
+          const SizedBox(height: 16),
           _buildSearchBar(isDark),
           const SizedBox(height: 16),
           
@@ -234,6 +260,42 @@ class _ChildTimeTableScreenState extends State<ChildTimeTableScreen> {
       case TimetablePeriod.month: return "Programme du mois";
     }
   }
+
+  Widget _buildPeriodTabs() => Container(
+        height: 48,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F2F7),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: TimetablePeriod.values.map((period) {
+            final selected = period == _selectedPeriod;
+            final label = switch (period) {
+              TimetablePeriod.day => 'Jour',
+              TimetablePeriod.week => 'Semaine',
+              TimetablePeriod.month => 'Mois',
+            };
+            return Expanded(
+              child: InkWell(
+                onTap: () {
+                  setState(() => _selectedPeriod = period);
+                  _fetchTimetable();
+                },
+                borderRadius: BorderRadius.circular(22),
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Text(label, style: TextStyle(color: selected ? const Color(0xFF155EEF) : const Color(0xFF667085), fontWeight: FontWeight.w700)),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      );
 
   Widget _buildSearchBar(bool isDark) {
     return Container(
