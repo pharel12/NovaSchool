@@ -1,0 +1,289 @@
+NOVASCHOOL — GUIDE TECHNIQUE DES FONCTIONNALITÉS RÉCENTES
+================================================================
+
+Public visé : développeur débutant ou apprenti Flutter.
+Périmètre : changements réalisés dans les échanges récents : langue,
+orientation scolaire, agenda enseignant, messagerie enseignant et
+changement du mot de passe.
+
+Ce document explique le besoin, les choix d’architecture, le trajet des
+données et les fichiers à consulter. Les fichiers Django cités dans la
+partie mot de passe viennent des extraits fournis ; le dépôt ouvert ici
+contient principalement le client Flutter.
+
+
+1. REPÈRES D’ARCHITECTURE
+----------------------------------------------------------------
+
+L’application sépare généralement l’affichage de l’accès aux données :
+
+  Écran Flutter (lib/screens/)
+          │ appelle
+          ▼
+  Service (lib/services/)
+          │ utilise
+          ▼
+  ApiClient / ApiConstants
+          │ requête HTTP authentifiée
+          ▼
+  API Django et, selon la fonction, Odoo
+
+Un écran ne devrait pas construire lui-même les URL ni décoder toutes les
+réponses HTTP. Le service connaît le contrat de l’API ; l’écran gère l’état
+visuel (chargement, erreur, données, interaction utilisateur).
+
+Dans Flutter, State.setState met à jour un écran local. ChangeNotifier,
+utilisé par le fournisseur de langue, notifie au contraire tous les widgets
+qui écoutent une préférence partagée.
+
+
+2. CHANGEMENT DE LANGUE SANS COURSE ASYNCHRONE
+----------------------------------------------------------------
+
+Besoin
+  Conserver le choix français/anglais et éviter que la lecture différée de
+  l’ancienne préférence remplace un choix que l’utilisateur vient de faire.
+
+Conception
+  LanguageProvider est la source de vérité du Locale actif. Au démarrage,
+  il lit SharedPreferences. Lors d’un choix, il applique d’abord la nouvelle
+  locale en mémoire, notifie l’application, puis tente de sauvegarder le
+  choix. La persistance ne doit pas retarder le changement visuel.
+
+Mise en œuvre
+  Fichiers :
+    lib/core/providers/language_provider.dart
+    lib/main.dart
+    lib/screens/profile/profile_screen.dart
+
+  1. MaterialApp lit languageProvider.locale.
+  2. changeLanguage normalise le code vers « fr » ou « en ».
+  3. Le provider change _locale et appelle notifyListeners().
+  4. MaterialApp reconstruit l’arbre avec la nouvelle locale.
+  5. Le code est écrit dans SharedPreferences pour le prochain démarrage.
+  6. _languageChanged empêche _loadLanguage de restaurer une ancienne valeur
+     si une sélection utilisateur a déjà eu lieu pendant le chargement.
+
+À retenir
+  Cette protection traite une course entre deux opérations asynchrones :
+  charger les préférences et choisir une langue. Le provider supporte les
+  codes français et anglais ; les textes codés directement dans les écrans
+  doivent également être localisés pour suivre ce changement.
+
+
+3. RÉPONSE DE L’ORIENTATION SCOLAIRE
+----------------------------------------------------------------
+
+Besoin
+  Présenter le résultat d’orientation de façon plus confortable, notamment
+  lorsqu’il s’agit d’un paragraphe long que l’utilisateur souhaite relire.
+
+Conception
+  Le service d’orientation s’occupe des appels API et renvoie des objets JSON.
+  L’écran conserve le résultat dans son état, puis le transmet à la carte de
+  recommandation. Le widget de texte reste sélectionnable et augmente
+  l’interligne pour faciliter la lecture.
+
+Mise en œuvre
+  Fichiers :
+    lib/services/orientation_service.dart
+    lib/screens/parent/parent_orientation_screen.dart
+    lib/core/constants/api_constants.dart
+
+  Routes utilisées :
+    GET  /orientation/student/{id}/profile/
+    POST /orientation/student/{id}/recommendations/
+    POST /orientation/student/{id}/ask/
+
+  Parcours des données :
+    1. L’écran appelle OrientationService.
+    2. OrientationService envoie la requête via ApiClient.
+    3. Le corps JSON est décodé en Map<String, dynamic>.
+    4. L’écran place le résultat dans _recommendation.
+    5. _RecommendationCard lit summary, advice ou recommendation selon les
+       champs disponibles et affiche le texte dans SelectableText.
+    6. Les parcours suggérés sont lus dans recommended_tracks lorsqu’ils
+       sont présents.
+
+À retenir
+  Les noms des clés JSON font partie du contrat entre Django et Flutter.
+  Si l’API change son format, adapter le décodage dans OrientationService ou
+  la carte de résultat. SelectableText améliore la sélection et la lecture,
+  mais ne remplace pas une vraie structuration de la réponse en sections.
+
+
+4. FILTRE DE L’AGENDA DU PROFESSEUR PAR CLASSE
+----------------------------------------------------------------
+
+Besoin
+  Permettre à l’enseignant de réduire son agenda aux cours d’une classe.
+  Le filtre doit fonctionner en vue jour, semaine et mois.
+
+Conception
+  Les cours et les classes proviennent de l’API de présence. Le service
+  extrait la liste « classes » de l’enveloppe JSON et garde cette liste en
+  mémoire. L’écran dérive les classes disponibles et maintient une classe
+  sélectionnée. La liste filtrée est calculée localement à partir des
+  créneaux chargés.
+
+Mise en œuvre
+  Fichiers :
+    lib/services/teacher_service.dart
+    lib/screens/teacher/teacher_agenda_screen.dart
+    lib/core/constants/api_constants.dart
+
+  Contrat utilisé :
+    GET /attendance/slots/?date=AAAA-MM-JJ
+    réponse attendue sous une forme proche de :
+      {
+        "classes": [{"id": 12, "name": "Terminale A"}],
+        "data": [{"class_id": 12, "classroom": "Terminale A", ...}]
+      }
+
+  Dans TeacherService.getAttendanceSlots :
+    1. ApiClient ajoute le jeton d’authentification.
+    2. Le service décode la réponse JSON.
+    3. La clé « classes » est gardée dans teacherClasses.
+    4. _dataList extrait « data », la liste des créneaux.
+
+  Dans TeacherAgendaScreen :
+    1. _loadAgenda charge les créneaux de la période choisie.
+    2. Les classes de l’API et celles déduites des créneaux remplissent le
+       menu « Filtrer par classe ».
+    3. _selectedClass vaut null pour toutes les classes, ou le nom choisi.
+    4. _visibleSlots sélectionne les créneaux dont la classe correspond.
+    5. La vue jour et la vue groupée semaine/mois affichent _visibleSlots.
+
+À retenir
+  Le filtre est local : changer de classe ne déclenche pas un nouvel appel.
+  L’API jointe accepte également class_id, ce qui permettrait plus tard un
+  filtrage serveur si les périodes deviennent trop volumineuses. La
+  correspondance actuelle repose surtout sur le nom de classe ; les données
+  de l’API doivent donc fournir un nom cohérent (classroom, class_name ou
+  class_id sous forme [id, nom]).
+
+
+5. NOM DE L’EXPÉDITEUR DANS LA MESSAGERIE ENSEIGNANT
+----------------------------------------------------------------
+
+Besoin
+  Quand un parent écrit à un professeur, le professeur doit identifier
+  l’auteur de chaque message reçu, et pas seulement lire son contenu.
+
+Conception
+  Le serializer Django fournit sender_name pour chaque message. Le client
+  l’affiche dans la bulle entrante. Le nom transmis par le serveur est
+  prioritaire ; le nom du parent attaché à la conversation sert de repli.
+  Les messages du professeur restent alignés à droite et ceux de l’autre
+  participant à gauche.
+
+Mise en œuvre
+  Fichiers Flutter :
+    lib/screens/teacher/teacher_chat_screen.dart
+    lib/services/teacher_service.dart
+    lib/core/constants/api_constants.dart
+
+  Flux :
+    1. TeacherService.getMessages demande les messages de la conversation.
+    2. Le backend sérialise chaque message avec sender_name, sender_type et
+       content.
+    3. TeacherChatScreen distingue les messages via sender_type.
+    4. Pour un message reçu, le nom apparaît au-dessus du texte.
+    5. Si sender_name est absent ou vide, widget.parentName est utilisé.
+
+  Le serializer fourni calcule le nom depuis le nom complet Django, puis
+  retombe sur le username si le nom complet est vide.
+
+À retenir
+  Le backend et le client doivent conserver les mêmes noms de champs JSON.
+  « sender_name » est une donnée d’affichage : l’autorisation d’accéder à une
+  conversation doit rester vérifiée côté serveur.
+
+
+6. CHANGEMENT DU MOT DE PASSE UNE SEULE FOIS
+----------------------------------------------------------------
+
+Besoin
+  Depuis le profil, un utilisateur peut remplacer son mot de passe une fois.
+  Il doit prouver qu’il connaît le mot de passe actuel et saisir deux fois le
+  nouveau.
+
+Conception
+  La limite ne peut pas reposer uniquement sur un bouton Flutter : une
+  application cliente peut être réinstallée ou appelée autrement. Le
+  backend doit rester l’autorité qui vérifie password_changed_once et refuse
+  une deuxième modification. Le client valide les champs pour donner un
+  retour immédiat, puis affiche la réponse de l’API.
+
+Mise en œuvre côté Flutter
+  Fichiers :
+    lib/screens/profile/profile_screen.dart
+    lib/services/auth_service.dart
+    lib/services/storage_service.dart
+    lib/models/user_model.dart
+    lib/core/constants/api_constants.dart
+
+  1. Le profil ouvre un formulaire : mot de passe actuel, nouveau mot de
+     passe et confirmation.
+  2. Le formulaire vérifie que les champs sont remplis et que les deux
+     nouveaux mots de passe correspondent.
+  3. AuthService envoie un POST authentifié à /password/change/ avec les clés
+     current_password, new_password et confirm_password.
+  4. Le serveur valide le nouveau mot de passe, vérifie le mot de passe
+     actuel auprès d’Odoo et contrôle le drapeau password_changed_once.
+  5. En cas de succès, le serveur actualise le mot de passe de session,
+     envoie success=true, et le client désactive l’action.
+  6. Le client garde aussi un marqueur chiffré dans FlutterSecureStorage,
+     associé à l’identifiant de l’utilisateur, afin de ne pas reproposer
+     l’action sur cet appareil.
+  7. En cas de refus parce que la modification a déjà eu lieu, le client
+     désactive également l’action.
+
+  UserModel sait lire le champ JSON password_changed_once. Pour synchroniser
+  l’état dès l’ouverture du profil sur un autre appareil, la route GET
+  /profile/ doit renvoyer :
+      "password_changed_once": user.password_changed_once
+
+  Le payload de profil inclus dans les extraits fournis ne contient pas
+  encore cette clé. Sans elle, l’API empêche tout de même la seconde
+  modification, mais le client distant ne peut pas afficher l’état désactivé
+  avant d’avoir reçu le refus du serveur.
+
+Sécurité
+  Ne jamais enregistrer le nouveau mot de passe en clair sur le téléphone.
+  Le client envoie les valeurs uniquement à l’API via ApiClient. Le serveur
+  doit utiliser le mécanisme de hachage Django/Odoo et ne jamais renvoyer le
+  mot de passe dans une réponse.
+
+
+7. COMMENT SUIVRE OU FAIRE ÉVOLUER CES FONCTIONS
+----------------------------------------------------------------
+
+Pour ajouter un champ d’écran :
+  - identifier son propriétaire (état de l’écran, modèle ou préférence) ;
+  - préciser le type JSON et le nom de clé attendu ;
+  - traiter chargement, succès, liste vide et erreur ;
+  - vérifier que l’asynchrone ne met pas à jour un widget démonté ;
+  - placer les textes dans AppLocalizations si la fonction doit être
+    disponible dans les deux langues.
+
+Pour changer une API :
+  - lire la route et le serializer Django ;
+  - comparer le contrat à ApiConstants et au service Flutter ;
+  - mettre à jour le modèle de données si le format est structuré ;
+  - garder les contrôles d’autorisation et les règles métier côté serveur.
+
+Scénarios de vérification manuelle suggérés :
+  - changer la langue rapidement après le démarrage et vérifier qu’elle ne
+    revient pas à l’ancienne ;
+  - comparer toutes les classes, puis une classe dans chaque vue d’agenda ;
+  - recevoir un message avec sender_name, puis un message sans ce champ ;
+  - changer le mot de passe avec valeurs valides, valeurs différentes, mauvais
+    mot de passe actuel et après un premier changement ;
+  - rouvrir le profil et contrôler son état après redémarrage.
+
+Les scénarios ci-dessus sont des pistes de vérification pour l’apprenti ;
+aucune suite de tests n’est déclarée dans ce document.
+
+================================================================
+Fin du guide

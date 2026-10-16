@@ -19,64 +19,140 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark =
+        theme.brightness == Brightness.dark;
 
     return Container(
-      height: 140,
-      padding: const EdgeInsets.all(16),
+      // Même hauteur pour les deux cartes
+      height: 155,
+
+      width: double.infinity,
+
+      padding: const EdgeInsets.all(14),
+
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(22),
+
+        borderRadius:
+        BorderRadius.circular(18),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : .05),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          )
+            color: Colors.black.withValues(
+              alpha: isDark ? 0.20 : 0.05,
+            ),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
         ],
       ),
+
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+
         children: [
+          // ====================================================
+          // ICÔNE
+          // ====================================================
+
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 38,
+            height: 38,
+
             decoration: BoxDecoration(
-              color: color.withValues(alpha: .1),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withValues(
+                alpha: 0.10,
+              ),
+
+              borderRadius:
+              BorderRadius.circular(11),
             ),
+
             child: Icon(
               icon,
               color: color,
               size: 20,
             ),
           ),
-          const Spacer(),
+
+          const SizedBox(height: 10),
+
+          // ====================================================
+          // TITRE
+          // ====================================================
+
           Text(
             title,
+
+            maxLines: 1,
+            overflow:
+            TextOverflow.ellipsis,
+
             style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+              color:
+              Colors.grey.shade600,
+              fontSize: 12,
+              fontWeight:
+              FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+
+          const SizedBox(height: 3),
+
+          // ====================================================
+          // VALEUR
+          // ====================================================
+
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment:
+              Alignment.centerLeft,
+
+              child: Text(
+                value,
+
+                maxLines: 1,
+
+                style: TextStyle(
+                  color: isDark
+                      ? Colors.white
+                      : const Color(
+                    0xFF111827,
+                  ),
+
+                  fontSize: 21,
+
+                  fontWeight:
+                  FontWeight.bold,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 2),
+
+          const SizedBox(height: 3),
+
+          // ====================================================
+          // SOUS-TITRE
+          // ====================================================
+
           Text(
             subtitle,
+
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            overflow:
+            TextOverflow.ellipsis,
+
             style: TextStyle(
-              color: color.withValues(alpha: 0.8),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              color: color.withValues(
+                alpha: 0.85,
+              ),
+
+              fontSize: 10,
+
+              fontWeight:
+              FontWeight.w600,
             ),
           ),
         ],

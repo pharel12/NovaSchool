@@ -19,6 +19,8 @@ class EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isImportant = tag == 'Important';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 9),
@@ -26,15 +28,15 @@ class EventCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
 
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
 
         borderRadius: BorderRadius.circular(14),
 
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x080D1A3A),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 10,
-            offset: Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -81,10 +83,10 @@ class EventCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
 
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF101828),
+                    color: isDark ? Colors.white : const Color(0xFF101828),
                   ),
                 ),
 
@@ -93,9 +95,9 @@ class EventCard extends StatelessWidget {
                 Text(
                   date,
 
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF58647D),
+                    color: isDark ? Colors.white70 : const Color(0xFF58647D),
                   ),
                 ),
               ],

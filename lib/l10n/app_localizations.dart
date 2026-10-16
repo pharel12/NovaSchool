@@ -211,6 +211,24 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Se déconnecter'**
   String get logout;
+
+  /// No description provided for @home.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accueil'**
+  String get home;
+
+  /// No description provided for @orientation.
+  ///
+  /// In fr, this message translates to:
+  /// **'Orientation'**
+  String get orientation;
+
+  /// No description provided for @profile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil'**
+  String get profile;
 }
 
 class _AppLocalizationsDelegate

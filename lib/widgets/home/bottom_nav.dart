@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class HomeBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
@@ -13,15 +15,20 @@ class HomeBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const primaryBlue = Color(0xFF0D47A1);
+    final l10n = AppLocalizations.of(context)!;
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final navBg = theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardColor;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: const [
+        color: navBg,
+        boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.12),
             blurRadius: 10,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
@@ -30,31 +37,36 @@ class HomeBottomNav extends StatelessWidget {
           onTap: onTap,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          backgroundColor: Colors.white,
-          selectedItemColor: primaryBlue,
+          backgroundColor: navBg,
+          selectedItemColor: isDark ? const Color(0xFF4659F5) : primaryBlue,
           unselectedItemColor: Colors.grey,
           selectedFontSize: 12,
           unselectedFontSize: 12,
-          items: const [
+          items: [
 
             BottomNavigationBarItem(
               icon: Icon(Icons.home_rounded),
-              label: "Accueil",
+              label: l10n.home,
             ),
 
             BottomNavigationBarItem(
               icon: Icon(Icons.calendar_month_rounded),
-              label: "Agenda",
+              label: l10n.agenda,
             ),
 
             BottomNavigationBarItem(
               icon: Icon(Icons.chat_bubble_outline_rounded),
-              label: "Messages",
+              label: l10n.messages,
+            ),
+
+            BottomNavigationBarItem(
+              icon: Icon(Icons.auto_awesome_outlined),
+              label: l10n.orientation,
             ),
 
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline_rounded),
-              label: "Profil",
+              label: l10n.profile,
             ),
           ],
       ),

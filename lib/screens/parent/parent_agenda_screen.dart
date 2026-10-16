@@ -172,7 +172,7 @@ class _ParentAgendaScreenState extends State<ParentAgendaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       body: SafeArea(
         child: FutureBuilder<List<AgendaEvent>>(
@@ -285,10 +285,12 @@ class _ParentAgendaScreenState extends State<ParentAgendaScreen> {
                         : _viewMode == 1
                         ? 'Événements de la semaine'
                         : 'Événements du mois',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF101828),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : const Color(0xFF101828),
                     ),
                   ),
 
@@ -359,6 +361,8 @@ class _AgendaHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
         const Icon(
@@ -369,12 +373,12 @@ class _AgendaHeader extends StatelessWidget {
 
         const SizedBox(width: 13),
 
-        const Text(
+        Text(
           'Agenda',
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF101828),
+            color: isDark ? Colors.white : const Color(0xFF101828),
           ),
         ),
 
@@ -438,12 +442,14 @@ class _ModeSelector extends StatelessWidget {
       'Mois',
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 54,
       padding: const EdgeInsets.all(4),
 
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F2F7),
+        color: isDark ? Theme.of(context).cardColor : const Color(0xFFF0F2F7),
         borderRadius: BorderRadius.circular(28),
       ),
 
@@ -462,7 +468,7 @@ class _ModeSelector extends StatelessWidget {
 
                   decoration: BoxDecoration(
                     color: active
-                        ? Colors.white
+                        ? (isDark ? const Color(0xFF2C324B) : Colors.white)
                         : Colors.transparent,
 
                     borderRadius:
@@ -581,7 +587,9 @@ class _WeekStrip extends StatelessWidget {
                         fontSize: 18,
                         color: active
                             ? Colors.white
-                            : const Color(0xFF101828),
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : const Color(0xFF101828)),
                         fontWeight: active
                             ? FontWeight.w800
                             : FontWeight.w500,
@@ -614,12 +622,14 @@ class _EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _eventColor(event.typeLabel);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
 
       child: Material(
-        color: Colors.white,
+        color: theme.cardColor,
 
         borderRadius: BorderRadius.circular(14),
 
@@ -634,7 +644,7 @@ class _EventCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
 
               border: Border.all(
-                color: const Color(0xFFE7EAF1),
+                color: isDark ? const Color(0xFF2C324B) : const Color(0xFFE7EAF1),
               ),
             ),
 
@@ -703,10 +713,10 @@ class _EventCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
 
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF101828),
+                          color: isDark ? Colors.white : const Color(0xFF101828),
                         ),
                       ),
 

@@ -19,4 +19,7 @@
   "accountInfo": "Account information",
   "changePassword": "Change password",
   "logout": "Log out"
+  ,"home": "Home"
+  ,"orientation": "Guidance"
+  ,"profile": "Profile"
 }

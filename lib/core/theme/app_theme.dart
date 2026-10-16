@@ -10,23 +10,33 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.background,
-      // Définit le jeu de couleurs principal de l'application
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF8FAFD),
+      cardColor: Colors.white,
       colorScheme: ColorScheme.fromSeed(
+        brightness: Brightness.light,
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         secondary: AppColors.secondary,
+        surface: Colors.white,
       ),
-      // Police par défaut
       fontFamily: 'Roboto',
-      // Personnalisation de toutes les AppBar
       appBarTheme: const AppBarTheme(
-        // Couleur de fond de la barre d'application
         backgroundColor: AppColors.primary,
-        // Couleur du texte et des icônes de l'AppBar
         foregroundColor: Colors.white,
-        // Supprime l'ombre sous l'AppBar
         elevation: 0,
+      ),
+      cardTheme: const CardThemeData(
+        color: Colors.white,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.white,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: Colors.grey,
       ),
     );
   }
@@ -36,26 +46,32 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF121212),
+      scaffoldBackgroundColor: const Color(0xFF121824),
+      cardColor: const Color(0xFF1E2638),
       colorScheme: ColorScheme.fromSeed(
         brightness: Brightness.dark,
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         secondary: AppColors.secondary,
-        surface: const Color(0xFF1E1E1E),
+        surface: const Color(0xFF1E2638),
       ),
       fontFamily: 'Roboto',
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1F3864),
+        backgroundColor: Color(0xFF1E2638),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       cardTheme: const CardThemeData(
-        color: Color(0xFF1E1E1E),
+        color: Color(0xFF1E2638),
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Color(0xFF1E2638),
+        selectedItemColor: Color(0xFF4659F5),
+        unselectedItemColor: Colors.grey,
       ),
     );
   }

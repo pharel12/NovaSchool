@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
+import '../../core/constants/api_constants.dart';
 import '../../services/storage_service.dart';
 import '../auth/login_screen.dart';
 import '../home/parent_home_screen.dart';
@@ -40,7 +41,89 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Lance l'animation et navigue après la transition.
     _animationController.forward();
-    _restoreSession();
+    _configureServerThenRestoreSession();
+  }
+
+  Future<void> _configureServerThenRestoreSession() async {
+    // Le contexte doit être rendu avant l'ouverture de la boîte de dialogue.
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+
+    final configured = await _showServerConfiguration();
+    if (!configured || !mounted) return;
+    await _restoreSession();
+  }
+
+  Future<bool> _showServerConfiguration() async {
+    final controller = TextEditingController(text: ApiConstants.baseUrl);
+    String? error;
+
+    final configured = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.dns_outlined, color: Color(0xFF155EEF)),
+              SizedBox(width: 10),
+              Text('Serveur NovaSchool'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Saisissez l’adresse IP du serveur. Le port 8000 et /api sont ajoutés automatiquement si nécessaire.',
+                style: TextStyle(fontSize: 13, color: Color(0xFF667085)),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.url,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Adresse du serveur',
+                  hintText: 'Ex. 192.168.1.158:8000',
+                  prefixIcon: const Icon(Icons.language_outlined),
+                  errorText: error,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF155EEF)),
+              onPressed: () async {
+                try {
+                  var server = controller.text.trim();
+                  if (server.isEmpty) {
+                    setDialogState(() => error = 'L’adresse IP est obligatoire.');
+                    return;
+                  }
+                  // Une IP sans port correspond au serveur Django par défaut.
+                  if (!server.contains(':') && !server.contains('://')) {
+                    server = '$server:8000';
+                  }
+                  await ApiConstants.setBaseUrl(server);
+                  if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                } on ArgumentError {
+                  setDialogState(() => error = 'Adresse invalide. Exemple : 192.168.1.158:8000');
+                } catch (_) {
+                  setDialogState(() => error = 'Impossible d’enregistrer cette adresse.');
+                }
+              },
+              child: const Text('Utiliser ce serveur'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    return configured ?? false;
   }
 
   /// Évite une nouvelle connexion tant qu'un JWT est stocké de façon sécurisée.

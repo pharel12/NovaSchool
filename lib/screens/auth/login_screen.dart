@@ -267,53 +267,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
 
                           const SizedBox(height: 25),
-
-                          // Séparateur "ou".
-                          Row(
-                            children: [
-                              const Expanded(child: Divider()),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: Text(
-                                  "ou",
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                              const Expanded(child: Divider()),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Boutons de connexion sociale.
-                          SocialLoginButton(
-                            label: "Continuer avec Google",
-                            imagePath: "assets/images/Google.png",
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text("Connexion Google à venir"),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 14),
-                          SocialLoginButton(
-                            label: "Continuer avec Facebook",
-                            imagePath: "assets/images/Facebook.png",
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text("Connexion Facebook à venir"),
-                                ),
-                              );
-                            },
-                          ),
                         ],
                       ),
                     ),

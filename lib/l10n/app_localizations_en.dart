@@ -64,4 +64,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logout => 'Log out';
+
+  @override
+  String get home => 'Home';
+
+  @override
+  String get orientation => 'Guidance';
+
+  @override
+  String get profile => 'Profile';
 }

@@ -1,45 +1,62 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
-import '../../services/auth_service.dart';
+import '../../services/teacher_service.dart';
 import '../../widgets/teacher/teacher_ui.dart';
 import '../teacher/teacher_chat_list_screen.dart';
-import '../teacher/teacher_mark_absence_screen.dart';
-import '../profile/profile_screen.dart';
 
-class TeacherHomeScreen extends StatelessWidget {
-  const TeacherHomeScreen({super.key});
+class TeacherHomeScreen extends StatefulWidget {
+  const TeacherHomeScreen({super.key, this.onNavigate});
+
+  /// Switches tabs while retaining the teacher navigation shell.
+  final ValueChanged<int>? onNavigate;
+
+  @override
+  State<TeacherHomeScreen> createState() => _TeacherHomeScreenState();
+}
+
+class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
+  final TeacherService _teacherService = TeacherService();
+
+  Map<String, dynamic>? _dashboard;
+
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
 
   // ============================================================
-  // NAVIGATION
+  // CHARGEMENT DU DASHBOARD
   // ============================================================
 
-  void _navigate(BuildContext context, int index) {
-    switch (index) {
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const TeacherChatListScreen(),
-          ),
-        );
-        break;
+  Future<void> _loadDashboard() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const TeacherMarkAbsenceScreen(),
-          ),
-        );
-        break;
+    try {
+      final data = await _teacherService.getTeacherDashboard();
 
-      case 3:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-        break;
+      if (!mounted) return;
 
-      default:
-        break;
+      setState(() {
+        _dashboard = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
@@ -50,52 +67,119 @@ class TeacherHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TeacherUi.canvas,
-
-      // ----------------------------------------------------------
-      // NAVIGATION DU BAS
-      // ----------------------------------------------------------
-
-      bottomNavigationBar: TeacherBottomNav(
-        currentIndex: 0,
-        onTap: (index) {
-          _navigate(context, index);
-        },
-      ),
-
-      // ----------------------------------------------------------
-      // CONTENU
-      // ----------------------------------------------------------
-
+      backgroundColor: TeacherUi.canvasColor(context),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            16,
-            12,
-            16,
-            20,
-          ),
-          children: [
-            _buildHeader(),
-
-            const SizedBox(height: 22),
-
-            _buildWelcome(),
-
-            const SizedBox(height: 20),
-
-            _buildStatistics(),
-
-            const SizedBox(height: 16),
-
-            _buildTodaySection(),
-
-            const SizedBox(height: 16),
-
-            _buildTasksSection(),
-          ],
+        child: RefreshIndicator(
+          onRefresh: _loadDashboard,
+          child: _buildBody(),
         ),
       ),
+    );
+  }
+
+  // ============================================================
+  // CORPS
+  // ============================================================
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_error != null) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        children: [
+          const SizedBox(height: 100),
+
+          const Icon(
+            Icons.error_outline_rounded,
+            size: 55,
+            color: Color(0xFFF0444A),
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            'Impossible de charger le dashboard',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: TeacherUi.inkColor(context),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(
+            _error!,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: TeacherUi.mutedColor(context),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          Center(
+            child: ElevatedButton(
+              onPressed: _loadDashboard,
+              child: const Text('Réessayer'),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_dashboard == null) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 150),
+          Center(
+            child: Text(
+              'Aucune donnée disponible.',
+              style: TextStyle(
+                color: TeacherUi.mutedColor(context),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        20,
+      ),
+      children: [
+        _buildHeader(),
+
+        const SizedBox(height: 22),
+
+        _buildWelcome(),
+
+        const SizedBox(height: 20),
+
+        _buildStatistics(),
+
+        const SizedBox(height: 16),
+
+        _buildTodaySection(),
+
+        const SizedBox(height: 16),
+
+        _buildTasksSection(),
+      ],
     );
   }
 
@@ -106,9 +190,9 @@ class TeacherHomeScreen extends StatelessWidget {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Icon(
+        Icon(
           Icons.menu_rounded,
-          color: TeacherUi.ink,
+          color: TeacherUi.inkColor(context),
         ),
 
         const SizedBox(width: 15),
@@ -121,12 +205,12 @@ class TeacherHomeScreen extends StatelessWidget {
 
         const SizedBox(width: 6),
 
-        const Text(
+        Text(
           'Nova',
           style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 17,
-            color: TeacherUi.ink,
+            color: TeacherUi.inkColor(context),
           ),
         ),
 
@@ -151,22 +235,29 @@ class TeacherHomeScreen extends StatelessWidget {
   // ============================================================
 
   Widget _buildNotificationButton() {
+    final statistics =
+    _dashboard?['statistics'] as Map<String, dynamic>?;
+
+    final unreadMessages =
+    _asInt(statistics?['unread_messages']);
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        const Icon(
+        Icon(
           Icons.notifications_none_rounded,
           size: 27,
-          color: TeacherUi.ink,
+          color: TeacherUi.inkColor(context),
         ),
 
-        Positioned(
-          right: -2,
-          top: -3,
-          child: _Badge(
-            '3',
+        if (unreadMessages > 0)
+          Positioned(
+            right: -2,
+            top: -3,
+            child: _Badge(
+              unreadMessages.toString(),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -176,18 +267,24 @@ class TeacherHomeScreen extends StatelessWidget {
   // ============================================================
 
   Widget _buildWelcome() {
+    final teacher =
+    _dashboard?['teacher'] as Map<String, dynamic>?;
+
+    final teacherName =
+        teacher?['name']?.toString().trim() ?? '';
+
+    final displayName =
+    teacherName.isNotEmpty ? teacherName : 'Professeur';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FutureBuilder(
-          future: AuthService().getProfile(),
-          builder: (context, snapshot) => Text(
-            'Bonjour, ${snapshot.data?.username ?? 'Professeur'} 👋',
-            style: const TextStyle(
+        Text(
+          'Bonjour, $displayName 👋',
+          style: TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.w800,
-            color: TeacherUi.ink,
-            ),
+            color: TeacherUi.inkColor(context),
           ),
         ),
 
@@ -196,7 +293,7 @@ class TeacherHomeScreen extends StatelessWidget {
         Text(
           "Voici un aperçu de votre activité aujourd'hui.",
           style: TextStyle(
-            color: TeacherUi.muted,
+            color: TeacherUi.mutedColor(context),
             fontSize: 13,
           ),
         ),
@@ -209,48 +306,65 @@ class TeacherHomeScreen extends StatelessWidget {
   // ============================================================
 
   Widget _buildStatistics() {
-    return const Row(
+    final statistics =
+    _dashboard?['statistics'] as Map<String, dynamic>?;
+
+    final classesCount =
+    _asInt(statistics?['classes_count']);
+
+    final studentsCount =
+    _asInt(statistics?['students_count']);
+
+    final messagesCount =
+    _asInt(statistics?['messages_count']);
+
+    final unreadMessages =
+    _asInt(statistics?['unread_messages']);
+
+    return Row(
       children: [
         Expanded(
           child: _Stat(
             icon: Icons.groups_outlined,
-            value: '3',
+            value: classesCount.toString(),
             label: 'Classes',
             color: TeacherUi.blue,
           ),
         ),
 
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
 
         Expanded(
           child: _Stat(
             icon: Icons.group_outlined,
-            value: '78',
+            value: studentsCount.toString(),
             label: 'Élèves',
-            color: Color(0xFF20B967),
+            color: const Color(0xFF20B967),
           ),
         ),
 
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
 
         Expanded(
           child: _Stat(
             icon: Icons.chat_bubble_outline_rounded,
-            value: '6',
+            value: messagesCount.toString(),
             label: 'Messages',
-            color: Color(0xFFF0444A),
-            badge: '2',
+            color: const Color(0xFFF0444A),
+            badge: unreadMessages > 0
+                ? unreadMessages.toString()
+                : null,
           ),
         ),
 
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
 
         Expanded(
           child: _Stat(
             icon: Icons.assignment_outlined,
-            value: '5',
+            value: '—',
             label: 'Devoirs\nà corriger',
-            color: Color(0xFFFF9D19),
+            color: const Color(0xFFFF9D19),
           ),
         ),
       ],
@@ -258,42 +372,60 @@ class TeacherHomeScreen extends StatelessWidget {
   }
 
   // ============================================================
-  // SECTION "AUJOURD'HUI"
+  // COURS DU JOUR
   // ============================================================
 
   Widget _buildTodaySection() {
+    final rawSlots =
+    _dashboard?['today_slots'];
+
+    final slots = rawSlots is List
+        ? rawSlots
+        .whereType<Map>()
+        .map(
+          (item) => Map<String, dynamic>.from(item),
+    )
+        .toList()
+        : <Map<String, dynamic>>[];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
           title: "Aujourd'hui",
           action: 'Voir tout',
+          onTap: () {
+            widget.onNavigate?.call(3);
+          },
         ),
 
         const SizedBox(height: 9),
 
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: TeacherUi.cardDecoration(),
-          child: const Column(
+          decoration: TeacherUi.cardDecoration(context),
+          child: slots.isEmpty
+              ? Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 18,
+            ),
+            child: Center(
+              child: Text(
+                'Aucun cours prévu aujourd’hui.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: TeacherUi.mutedColor(context),
+                ),
+              ),
+            ),
+          )
+              : Column(
             children: [
-              _Course(
-                'Mathématiques - 4ème A',
-                '08:00 - 09:00',
-                'Dans 20 min',
-              ),
-
-              _Course(
-                'Mathématiques - 4ème B',
-                '10:00 - 11:00',
-                null,
-              ),
-
-              _Course(
-                'Mathématiques - 3ème A',
-                '14:00 - 15:00',
-                null,
-              ),
+              for (int i = 0; i < slots.length; i++)
+                _buildCourseFromApi(
+                  slots[i],
+                  isLast: i == slots.length - 1,
+                ),
             ],
           ),
         ),
@@ -302,19 +434,86 @@ class TeacherHomeScreen extends StatelessWidget {
   }
 
   // ============================================================
-  // SECTION "À FAIRE"
+  // COURS API
+  // ============================================================
+
+  Widget _buildCourseFromApi(
+      Map<String, dynamic> slot, {
+        bool isLast = false,
+      }) {
+    final subject =
+        slot['subject']?.toString().trim() ?? '';
+
+    final classroom =
+        slot['classroom']?.toString().trim() ?? '';
+
+    final name =
+        slot['name']?.toString().trim() ?? '';
+
+    final title =
+    subject.isNotEmpty && classroom.isNotEmpty
+        ? '$subject - $classroom'
+        : name.isNotEmpty
+        ? name
+        : subject.isNotEmpty
+        ? subject
+        : 'Cours';
+
+    final start =
+        slot['start']?.toString() ?? '';
+
+    final end =
+        slot['end']?.toString() ?? '';
+
+    final time =
+    start.isNotEmpty && end.isNotEmpty
+        ? '$start - $end'
+        : start.isNotEmpty
+        ? start
+        : 'Horaire non défini';
+
+    final attendanceDone =
+        slot['attendance_done'] == true;
+
+    return Column(
+      children: [
+        _Course(
+          title,
+          time,
+          attendanceDone
+              ? 'Présence faite'
+              : null,
+        ),
+
+        if (!isLast)
+          const Divider(
+            height: 1,
+            color: Color(0xFFE5E7EB),
+          ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // TÂCHES
   // ============================================================
 
   Widget _buildTasksSection() {
+    final statistics =
+    _dashboard?['statistics'] as Map<String, dynamic>?;
+
+    final unreadMessages =
+    _asInt(statistics?['unread_messages']);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'À faire',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: TeacherUi.ink,
+            color: TeacherUi.inkColor(context),
           ),
         ),
 
@@ -322,7 +521,7 @@ class TeacherHomeScreen extends StatelessWidget {
 
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: TeacherUi.cardDecoration(),
+          decoration: TeacherUi.cardDecoration(context),
           child: Column(
             children: [
               const _Task(
@@ -338,12 +537,22 @@ class TeacherHomeScreen extends StatelessWidget {
               ),
 
               _Task(
-                'Répondre aux messages',
+                unreadMessages > 0
+                    ? 'Répondre aux messages ($unreadMessages)'
+                    : 'Répondre aux messages',
                 null,
                 Colors.transparent,
                 onTap: () {
-                  // Navigation vers la messagerie
-                  // Elle sera effectuée depuis le contexte parent.
+                  if (widget.onNavigate != null) {
+                    widget.onNavigate!(1);
+                    return;
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TeacherChatListScreen(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -351,6 +560,21 @@ class TeacherHomeScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  // ============================================================
+  // UTILITAIRE
+  // ============================================================
+
+  int _asInt(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+
+    return int.tryParse(
+      value?.toString() ?? '',
+    ) ??
+        0;
   }
 }
 
@@ -410,7 +634,7 @@ class _Stat extends StatelessWidget {
         vertical: 10,
         horizontal: 5,
       ),
-      decoration: TeacherUi.cardDecoration(),
+      decoration: TeacherUi.cardDecoration(context),
       child: Column(
         children: [
           Stack(
@@ -426,9 +650,7 @@ class _Stat extends StatelessWidget {
                 Positioned(
                   right: -3,
                   top: -3,
-                  child: _Badge(
-                    badge!,
-                  ),
+                  child: _Badge(badge!),
                 ),
             ],
           ),
@@ -437,20 +659,20 @@ class _Stat extends StatelessWidget {
 
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 16,
-              color: TeacherUi.ink,
+              color: TeacherUi.inkColor(context),
             ),
           ),
 
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
               height: 1.25,
-              color: TeacherUi.muted,
+              color: TeacherUi.mutedColor(context),
             ),
           ),
         ],
@@ -466,10 +688,12 @@ class _Stat extends StatelessWidget {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String action;
+  final VoidCallback? onTap;
 
   const _SectionHeader({
     required this.title,
     required this.action,
+    this.onTap,
   });
 
   @override
@@ -478,21 +702,28 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: TeacherUi.ink,
+            color: TeacherUi.inkColor(context),
           ),
         ),
 
         const Spacer(),
 
-        Text(
-          action,
-          style: const TextStyle(
-            fontSize: 12,
-            color: TeacherUi.blue,
-            fontWeight: FontWeight.w700,
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Text(
+              action,
+              style: const TextStyle(
+                fontSize: 12,
+                color: TeacherUi.blue,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ),
       ],
@@ -536,10 +767,12 @@ class _Course extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: TeacherUi.ink,
+                    color: TeacherUi.inkColor(context),
                   ),
                 ),
 
@@ -547,9 +780,9 @@ class _Course extends StatelessWidget {
 
                 Text(
                   time,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: TeacherUi.muted,
+                    color: TeacherUi.mutedColor(context),
                   ),
                 ),
               ],
@@ -609,10 +842,10 @@ class _Task extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.check_box_outline_blank_rounded,
               size: 17,
-              color: TeacherUi.muted,
+              color: TeacherUi.mutedColor(context),
             ),
 
             const SizedBox(width: 9),
@@ -620,9 +853,9 @@ class _Task extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: TeacherUi.ink,
+                  color: TeacherUi.inkColor(context),
                 ),
               ),
             ),

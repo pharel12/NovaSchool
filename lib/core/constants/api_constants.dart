@@ -1,4 +1,5 @@
 import 'package:network_info_plus/network_info_plus.dart';
+import '../../services/storage_service.dart';
 
 /// Centralise toutes les routes de l'API - OdooManager Middleware v2.0
 class ApiConstants {
@@ -7,10 +8,10 @@ class ApiConstants {
   // ===========================================================================
 
   /// URL actuellement sélectionnée
-  static String _baseUrl = 'http://192.168.1.149:8000/api';
+  static String _baseUrl = 'http://192.168.1.158:8000/api';
 
   /// URL par défaut si aucun Wi-Fi connu n'est détecté
-  static const String defaultUrl = 'http://192.168.1.149:8000/api';
+  static const String defaultUrl = 'http://192.168.1.158:8000/api';
 
   // ===========================================================================
   // MAPPING WIFI -> SERVEUR
@@ -40,6 +41,24 @@ class ApiConstants {
       // Retire les éventuels guillemets ajoutés par Android
       final cleanWifiName = wifiName?.replaceAll('"', '').trim();
 
+      // Un serveur enregistré pour ce Wi-Fi est prioritaire sur la valeur
+      // générale : l'application peut donc utiliser une IP différente pour
+      // chaque réseau, sans modifier le code.
+      final savedNetworkUrls = await StorageService().getNetworkApiUrls();
+      final networkUrl = cleanWifiName == null ? null : savedNetworkUrls[cleanWifiName];
+      if (networkUrl != null && networkUrl.isNotEmpty) {
+        _baseUrl = normalizeBaseUrl(networkUrl);
+        return;
+      }
+
+      // Une URL générale fonctionne sur tout réseau où le serveur est
+      // joignable (IP fixe, DNS public/interne ou mDNS).
+      final savedUrl = await StorageService().getApiBaseUrl();
+      if (savedUrl != null && savedUrl.trim().isNotEmpty) {
+        _baseUrl = normalizeBaseUrl(savedUrl);
+        return;
+      }
+
       print('📶 Wi-Fi détecté : $cleanWifiName');
 
       if (cleanWifiName != null &&
@@ -66,6 +85,48 @@ class ApiConstants {
   // ===========================================================================
   static String get baseUrl => _baseUrl;
 
+  /// Définit l'URL du serveur pour tous les réseaux et la conserve sur
+  /// l'appareil. Utilisez de préférence un nom DNS stable (ex.
+  /// https://api.novaschool.example/api) si les appareils changent de réseau.
+  static Future<void> setBaseUrl(String url) async {
+    _baseUrl = normalizeBaseUrl(url);
+    await StorageService().saveApiBaseUrl(_baseUrl);
+  }
+
+  /// Revient à la détection Wi-Fi et aux valeurs de secours configurées.
+  static Future<void> clearCustomBaseUrl() async {
+    await StorageService().clearApiBaseUrl();
+    await initialize();
+  }
+
+  /// Associe l'URL API au Wi-Fi actuellement connecté. Cette méthode permet
+  /// d'utiliser automatiquement la bonne IP quand l'utilisateur change de
+  /// réseau local.
+  static Future<void> setBaseUrlForCurrentNetwork(String url) async {
+    final network = await NetworkInfo().getWifiName();
+    final name = network?.replaceAll('"', '').trim();
+    if (name == null || name.isEmpty) {
+      throw StateError('Aucun réseau Wi-Fi détecté.');
+    }
+    final normalized = normalizeBaseUrl(url);
+    await StorageService().saveNetworkApiUrl(name, normalized);
+    _baseUrl = normalized;
+  }
+
+  static String normalizeBaseUrl(String value) {
+    var raw = value.trim().replaceAll(RegExp(r'/+$'), '');
+    // La fenêtre de démarrage accepte directement une IP : 192.168.1.10
+    // ou une IP avec port : 192.168.1.10:8000.
+    if (!raw.startsWith('http://') && !raw.startsWith('https://')) {
+      raw = 'http://$raw';
+    }
+    final uri = Uri.tryParse(raw);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      throw ArgumentError('URL API invalide.');
+    }
+    return raw.endsWith('/api') ? raw : '$raw/api';
+  }
+
   // ===========================================================================
   // AUTHENTIFICATION
   // ===========================================================================
@@ -78,6 +139,7 @@ class ApiConstants {
   // PROFIL UTILISATEUR
   // ===========================================================================
   static String get profile => "$baseUrl/profile/";
+  static String get changePassword => "$baseUrl/password/change/";
 
   // ===========================================================================
   // GESTION DES ENFANTS
@@ -104,8 +166,11 @@ class ApiConstants {
   // ===========================================================================
   // ABSENCES / PRÉSENCES (Enseignants)
   // ===========================================================================
-  static String get teacherMarkAbsence => "$baseUrl/teacher/absences/mark/";
-  static String get teacherStudentsList => "$baseUrl/teacher/students/";
+  static String get teacherAttendanceSlots => "$baseUrl/attendance/slots/";
+  static String teacherAttendanceStudents(int slotId) => "$baseUrl/attendance/slots/$slotId/students/";
+  static String teacherAttendanceList(int slotId) => "$baseUrl/attendance/slots/$slotId/";
+  static String get teacherMarkAttendance => "$baseUrl/attendance/mark/";
+  static String get teacherMarkBulkAttendance => "$baseUrl/attendance/mark-bulk/";
 
   // ===========================================================================
   // ABSENCES / PRÉSENCES
@@ -225,4 +290,18 @@ class ApiConstants {
   // ===========================================================================
   static String get parentAgenda => "$baseUrl/agenda/";
   static String parentAgendaDetail(int eventId) => "$baseUrl/agenda/$eventId/";
+
+  // ===========================================================================
+  // ORIENTATION SCOLAIRE (PARENT)
+  // ===========================================================================
+  static String orientationProfile(int studentId) => "$baseUrl/orientation/student/$studentId/profile/";
+  static String orientationSchoolProfile(int studentId) => "$baseUrl/orientation/student/$studentId/school-profile/";
+  static String orientationRecommendations(int studentId) => "$baseUrl/orientation/student/$studentId/recommendations/";
+  static String orientationAsk(int studentId) => "$baseUrl/orientation/student/$studentId/ask/";
+
+  // ===========================================================================
+  // DASHBOARDS
+  // ===========================================================================
+  static String get parentDashboard => "$baseUrl/dashboard/parent/";
+  static String get teacherDashboard => "$baseUrl/dashboard/teacher/";
 }

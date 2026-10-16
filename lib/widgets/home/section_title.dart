@@ -12,6 +12,8 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
 
@@ -31,10 +33,10 @@ class SectionTitle extends StatelessWidget {
         // Titre
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF101828),
+            color: isDark ? Colors.white : const Color(0xFF101828),
           ),
         ),
 

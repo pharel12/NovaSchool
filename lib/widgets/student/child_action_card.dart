@@ -20,13 +20,14 @@ class ChildActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin:
       const EdgeInsets.only(bottom:12),
 
       child: Material(
         color:
-        Colors.white,
+        theme.cardColor,
 
         borderRadius:
         BorderRadius.circular(18),

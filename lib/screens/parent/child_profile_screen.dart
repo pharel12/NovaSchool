@@ -105,9 +105,9 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF155EEF),
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         foregroundColor: Colors.white,
         title: Text(

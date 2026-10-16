@@ -72,4 +72,39 @@ class AuthService {
       );
     }
   }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await ApiClient().post(
+      ApiConstants.changePassword,
+      body: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'confirm_password': confirmPassword,
+      },
+    );
+
+    Map<String, dynamic> data = {};
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map) data = Map<String, dynamic>.from(decoded);
+    } catch (_) {
+      // Keep a readable fallback if the server returns a non-JSON error.
+    }
+
+    if (response.statusCode != 200 || data['success'] == false) {
+      final message = data['message'];
+      final readableMessage = message is List
+          ? message.map((item) => item.toString()).join('\n')
+          : message?.toString();
+      throw Exception(
+        readableMessage?.isNotEmpty == true
+            ? readableMessage
+            : 'Impossible de modifier le mot de passe.',
+      );
+    }
+  }
 }

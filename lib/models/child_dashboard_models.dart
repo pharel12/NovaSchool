@@ -1,3 +1,9 @@
+import 'package:flutter/foundation.dart';
+
+// ============================================================================
+// ABSENCES
+// ============================================================================
+
 class AbsenceEntry {
   final int id;
   final int studentId;
@@ -22,23 +28,50 @@ class AbsenceEntry {
   });
 
   factory AbsenceEntry.fromJson(Map<String, dynamic> json) {
-    final student = json["student_id"] is List ? json["student_id"] as List : null;
-    final teacher = json["teacher_id"] is List ? json["teacher_id"] as List : null;
+    final student =
+    json["student_id"] is List ? json["student_id"] as List : null;
+
+    final teacher =
+    json["teacher_id"] is List ? json["teacher_id"] as List : null;
 
     return AbsenceEntry(
-      id: json["id"] ?? 0,
-      studentId: student?.first as int? ?? 0,
-      studentName: student != null ? student.last.toString() : "",
-      teacherId: teacher?.first as int?,
-      teacherName: teacher != null ? teacher.last.toString() : null,
+      id: _asInt(json["id"]),
+
+      studentId:
+      student != null && student.isNotEmpty
+          ? _asInt(student.first)
+          : _asInt(json["student_id"]),
+
+      studentName:
+      student != null && student.length > 1
+          ? student.last.toString()
+          : json["student_name"]?.toString() ?? "",
+
+      teacherId:
+      teacher != null && teacher.isNotEmpty
+          ? _asInt(teacher.first)
+          : _nullableInt(json["teacher_id"]),
+
+      teacherName:
+      teacher != null && teacher.length > 1
+          ? teacher.last.toString()
+          : json["teacher_name"]?.toString(),
+
       status: json["status"]?.toString() ?? "",
+
       comment: json["comment"]?.toString(),
-      // Odoo peut retourner une date vide pour un enregistrement en cours.
-      // Une valeur de repli évite de bloquer tout l'écran d'absences.
-      startDate: DateTime.tryParse(json["start_datetime"]?.toString() ?? '') ??
+
+      startDate:
+      DateTime.tryParse(
+        json["start_datetime"]?.toString() ?? "",
+      ) ??
           DateTime.fromMillisecondsSinceEpoch(0),
-      endDate: json["end_datetime"] != null
-          ? DateTime.tryParse(json["end_datetime"].toString())
+
+      endDate:
+      json["end_datetime"] != null
+          ? DateTime.tryParse(
+        json["end_datetime"].toString(),
+      )
           : null,
     );
   }
@@ -49,6 +82,10 @@ class AbsenceEntry {
 
   bool get isPresent => status == "present";
 }
+
+// ============================================================================
+// NOTES
+// ============================================================================
 
 class GradeEntry {
   final int id;
@@ -74,81 +111,151 @@ class GradeEntry {
   });
 
   factory GradeEntry.fromJson(Map<String, dynamic> json) {
-    final evaluation = json["evaluation_id"] as List?;
-    final course = json["course_id"] as List?;
+    final evaluation =
+    json["evaluation_id"] is List
+        ? json["evaluation_id"] as List
+        : null;
+
+    final course =
+    json["course_id"] is List
+        ? json["course_id"] as List
+        : null;
 
     return GradeEntry(
-      id: json["id"] ?? 0,
-      evaluationId: evaluation != null ? evaluation.first as int : 0,
+      id: _asInt(json["id"]),
+
+      evaluationId:
+      evaluation != null && evaluation.isNotEmpty
+          ? _asInt(evaluation.first)
+          : _asInt(json["evaluation_id"]),
+
       evaluationName:
-      evaluation != null ? evaluation.last.toString() : "",
-      courseId: course != null ? course.first as int : 0,
-      courseName: json["course_name"] ??
-          (course != null ? course.last.toString() : ""),
+      evaluation != null && evaluation.length > 1
+          ? evaluation.last.toString()
+          : json["evaluation_name"]?.toString() ?? "",
+
+      courseId:
+      course != null && course.isNotEmpty
+          ? _asInt(course.first)
+          : _asInt(json["course_id"]),
+
+      courseName:
+      json["course_name"]?.toString() ??
+          (course != null && course.length > 1
+              ? course.last.toString()
+              : ""),
+
       type: json["type"]?.toString() ?? "",
-      grade: (json["grade"] ?? 0).toDouble(),
+
+      grade: _asDouble(json["grade"]),
+
       comment: json["comment"]?.toString(),
-      date: json["date"] != null
-          ? DateTime.tryParse(json["date"])
+
+      date:
+      json["date"] != null
+          ? DateTime.tryParse(
+        json["date"].toString(),
+      )
           : null,
     );
   }
 }
 
+// ============================================================================
+// NOTES GROUPÉES PAR MATIÈRE
+// ============================================================================
+
 class CourseGrades {
-final int courseId;
-final String courseName;
-final double average;
-final List<GradeEntry> grades;
+  final int courseId;
+  final String courseName;
+  final double average;
+  final List<GradeEntry> grades;
 
-const CourseGrades({
-required this.courseId,
-required this.courseName,
-required this.average,
-required this.grades,
-});
+  const CourseGrades({
+    required this.courseId,
+    required this.courseName,
+    required this.average,
+    required this.grades,
+  });
 
-factory CourseGrades.fromJson(Map<String, dynamic> json) {
-return CourseGrades(
-courseId: json['course_id'] ?? 0,
-courseName: json['course_name'] ?? '',
-average: (json['average'] ?? 0).toDouble(),
-grades: (json['grades'] as List? ?? [])
-    .map((e) => GradeEntry.fromJson(Map<String, dynamic>.from(e)))
-    .toList(),
-);
+  factory CourseGrades.fromJson(Map<String, dynamic> json) {
+    return CourseGrades(
+      courseId: _asInt(json["course_id"]),
+
+      courseName:
+      json["course_name"]?.toString() ?? "",
+
+      average:
+      _asDouble(json["average"]),
+
+      grades:
+      (json["grades"] as List? ?? [])
+          .whereType<Map>()
+          .map(
+            (e) => GradeEntry.fromJson(
+          Map<String, dynamic>.from(e),
+        ),
+      )
+          .toList(),
+    );
+  }
 }
-}
+
+// ============================================================================
+// NOTES GROUPÉES
+// ============================================================================
 
 class GroupedGrades {
-final List<CourseGrades> byCourse;
+  final List<CourseGrades> byCourse;
 
-const GroupedGrades({
-required this.byCourse,
-});
+  const GroupedGrades({
+    required this.byCourse,
+  });
 
-factory GroupedGrades.fromJson(Map<String, dynamic> json) {
-return GroupedGrades(
-byCourse: (json['by_course'] as List? ?? [])
-    .map((e) => CourseGrades.fromJson(Map<String, dynamic>.from(e)))
-    .toList(),
-);
+  factory GroupedGrades.fromJson(Map<String, dynamic> json) {
+    return GroupedGrades(
+      byCourse:
+      (json["by_course"] as List? ?? [])
+          .whereType<Map>()
+          .map(
+            (e) => CourseGrades.fromJson(
+          Map<String, dynamic>.from(e),
+        ),
+      )
+          .toList(),
+    );
+  }
 }
-}
+
+// ============================================================================
+// CRÉNEAU D'EMPLOI DU TEMPS
+// ============================================================================
 
 class CoursSlot {
   final int id;
+
   final int courseId;
+
   final String courseName;
+
   final int? teacherId;
+
   final String? teacherName;
+
   final String day;
+
   final String startTime;
+
   final String endTime;
+
   final String? room;
+
   final String? type;
+
   final DateTime? startDatetime;
+
   final DateTime? endDatetime;
+
   final bool isToday;
 
   const CoursSlot({
@@ -168,36 +275,138 @@ class CoursSlot {
   });
 
   factory CoursSlot.fromJson(Map<String, dynamic> json) {
-    final course = json["course_id"] as List?;
-    final teacher = json["teacher_id"] as List?;
-    final courseInfo = json['course'] as Map?;
-    final teacherInfo = json['teacher'] as Map?;
+    /*
+     * Le middleware peut retourner :
+     *
+     * "course_id": [3, "Mathématiques"]
+     *
+     * OU :
+     *
+     * "course": {
+     *    "id": 3,
+     *    "name": "Mathématiques"
+     * }
+     */
+
+    final course =
+    json["course_id"] is List
+        ? json["course_id"] as List
+        : null;
+
+    final teacher =
+    json["teacher_id"] is List
+        ? json["teacher_id"] as List
+        : null;
+
+    final courseInfo =
+    json["course"] is Map
+        ? Map<String, dynamic>.from(
+      json["course"] as Map,
+    )
+        : null;
+
+    final teacherInfo =
+    json["teacher"] is Map
+        ? Map<String, dynamic>.from(
+      json["teacher"] as Map,
+    )
+        : null;
+
+    /*
+     * ID du cours
+     */
+
+    final int courseId =
+    course != null && course.isNotEmpty
+        ? _asInt(course.first)
+        : _asInt(courseInfo?["id"]);
+
+    /*
+     * Nom du cours
+     */
+
+    final String courseName =
+    course != null && course.length > 1
+        ? course.last.toString()
+        : courseInfo?["name"]?.toString() ??
+        json["course_name"]?.toString() ??
+        json["name"]?.toString() ??
+        "Cours";
+
+    /*
+     * ID du professeur
+     */
+
+    final int? teacherId =
+    teacher != null && teacher.isNotEmpty
+        ? _nullableInt(teacher.first)
+        : _nullableInt(teacherInfo?["id"]);
+
+    /*
+     * Nom du professeur
+     */
+
+    final String? teacherName =
+    teacher != null && teacher.length > 1
+        ? teacher.last.toString()
+        : teacherInfo?["name"]?.toString() ??
+        json["teacher_name"]?.toString();
 
     return CoursSlot(
-      id: json["id"] ?? 0,
-      courseId: course != null ? course.first as int : (courseInfo?['id'] as int? ?? 0),
-      courseName: course != null ? course.last.toString() : (courseInfo?['name']?.toString() ?? json['name']?.toString() ?? ''),
-      teacherId: teacher != null ? teacher.first as int : teacherInfo?['id'] as int?,
-      teacherName: teacher != null ? teacher.last.toString() : teacherInfo?['name']?.toString(),
+      id: _asInt(json["id"]),
+
+      courseId: courseId,
+
+      courseName: courseName,
+
+      teacherId: teacherId,
+
+      teacherName: teacherName,
+
       day: json["day"]?.toString() ?? "",
-      startTime: json["start_time"]?.toString() ?? "",
-      endTime: json["end_time"]?.toString() ?? "",
+
+      startTime:
+      json["start_time"]?.toString() ??
+          json["startTime"]?.toString() ??
+          "",
+
+      endTime:
+      json["end_time"]?.toString() ??
+          json["endTime"]?.toString() ??
+          "",
+
       room: json["room"]?.toString(),
+
       type: json["type"]?.toString(),
-      startDatetime: json["start_datetime"] != null 
-          ? DateTime.tryParse(json["start_datetime"].toString()) 
+
+      startDatetime:
+      json["start_datetime"] != null
+          ? DateTime.tryParse(
+        json["start_datetime"].toString(),
+      )
           : null,
-      endDatetime: json["end_datetime"] != null 
-          ? DateTime.tryParse(json["end_datetime"].toString()) 
+
+      endDatetime:
+      json["end_datetime"] != null
+          ? DateTime.tryParse(
+        json["end_datetime"].toString(),
+      )
           : null,
-      isToday: json["is_today"] ?? false,
+
+      isToday:
+      json["is_today"] == true ||
+          json["is_today"]?.toString().toLowerCase() == "true",
     );
   }
 }
 
+// ============================================================================
+// JOURNÉE DE L'EMPLOI DU TEMPS
+// ============================================================================
 
 class TimetableDay {
   final String day;
+
   final List<CoursSlot> slots;
 
   const TimetableDay({
@@ -205,23 +414,36 @@ class TimetableDay {
     required this.slots,
   });
 
-  factory TimetableDay.fromJson(Map<String, dynamic> json) {
+  factory TimetableDay.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return TimetableDay(
       day: json["day"]?.toString() ?? "",
-      slots: (json["slots"] as List<dynamic>? ?? [])
-          .map((e) => CoursSlot.fromJson(Map<String, dynamic>.from(e)))
+
+      slots:
+      (json["slots"] as List? ?? [])
+          .whereType<Map>()
+          .map(
+            (e) => CoursSlot.fromJson(
+          Map<String, dynamic>.from(e),
+        ),
+      )
           .toList(),
     );
   }
 }
 
+// ============================================================================
+// EMPLOI DU TEMPS COMPLET
+// ============================================================================
+
 class TimetableData {
   final int studentId;
+
   final String studentName;
+
   final List<TimetableDay> timetable;
 
-  /// Métadonnées du planning renvoyées par le middleware (peuvent être nulles
-  /// lorsqu'aucun planning n'est encore défini pour la classe).
   final String? timetableName;
 
   const TimetableData({
@@ -231,35 +453,222 @@ class TimetableData {
     this.timetableName,
   });
 
-  factory TimetableData.fromJson(Map<String, dynamic> json) {
-    // StudentTimetableView enveloppe le planning dans { success, data, filters }.
-    final payload = json['data'] is Map
-        ? Map<String, dynamic>.from(json['data'] as Map)
-        : json;
-    final student = payload["student"] as Map?;
-    final timetableInfo = payload["timetable"] as Map?;
-    final slots = (payload["slots"] as List? ?? const [])
-        .whereType<Map>()
-        .map((slot) => CoursSlot.fromJson(Map<String, dynamic>.from(slot)))
-        .toList();
+  // --------------------------------------------------------------------------
+  // PARSING JSON
+  // --------------------------------------------------------------------------
 
-    // Le middleware renvoie une liste plate de créneaux. L'interface Flutter
-    // utilise des journées : on recompose donc ce format ici, à une seule place.
-    final slotsByDay = <String, List<CoursSlot>>{};
-    for (final slot in slots) {
-      slotsByDay.putIfAbsent(slot.day, () => []).add(slot);
+  factory TimetableData.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    /*
+     * ============================================================
+     * STRUCTURE RENVOYÉE PAR DJANGO
+     * ============================================================
+     *
+     * {
+     *   "success": true,
+     *   "message": "...",
+     *   "filters": {
+     *      "student_id": 18,
+     *      "period": "week",
+     *      "date": null
+     *   },
+     *   "data": [
+     *      {
+     *         "id": 1,
+     *         "day": "monday",
+     *         "start_time": "08:00",
+     *         "end_time": "10:00",
+     *         "course": {
+     *             "id": 1,
+     *             "name": "Mathématiques"
+     *         },
+     *         "teacher": {
+     *             "id": 12,
+     *             "name": "Ngaleu Frank"
+     *         }
+     *      }
+     *   ]
+     * }
+     *
+     * Le middleware renvoie donc une LISTE directement dans "data".
+     *
+     * Il ne renvoie pas :
+     *
+     * "data": {
+     *    "slots": [...]
+     * }
+     */
+
+    dynamic payload = json["data"] ?? json;
+
+    // Liste brute des créneaux.
+    List<dynamic> rawSlots = [];
+
+    /*
+     * ============================================================
+     * CAS 1 : data est directement une LISTE
+     * ============================================================
+     */
+
+    if (payload is List) {
+      rawSlots = payload;
     }
 
+    /*
+     * ============================================================
+     * CAS 2 : compatibilité avec une future réponse :
+     *
+     * "data": {
+     *     "slots": [...]
+     * }
+     * ============================================================
+     */
+
+    Map<String, dynamic>? payloadMap;
+
+    if (payload is Map) {
+      payloadMap = Map<String, dynamic>.from(
+        payload,
+      );
+
+      final slots = payloadMap["slots"];
+
+      if (slots is List) {
+        rawSlots = slots;
+      }
+    }
+
+    /*
+     * ============================================================
+     * CONVERSION DES CRÉNEAUX
+     * ============================================================
+     */
+
+    final List<CoursSlot> slots =
+    rawSlots
+        .whereType<Map>()
+        .map(
+          (slot) => CoursSlot.fromJson(
+        Map<String, dynamic>.from(slot),
+      ),
+    )
+        .toList();
+
+    /*
+     * ============================================================
+     * RÉCUPÉRER LES INFORMATIONS DE L'ÉLÈVE
+     * ============================================================
+     */
+
+    Map<String, dynamic>? student;
+
+    if (payloadMap != null &&
+        payloadMap["student"] is Map) {
+      student = Map<String, dynamic>.from(
+        payloadMap["student"] as Map,
+      );
+    }
+
+    /*
+     * ============================================================
+     * REGROUPER LES CRÉNEAUX PAR JOUR
+     * ============================================================
+     *
+     * Exemple :
+     *
+     * lundi:
+     *   - Mathématiques
+     *   - Français
+     *
+     * mardi:
+     *   - Anglais
+     *
+     * mercredi:
+     *   - Physique
+     */
+
+    final Map<String, List<CoursSlot>> slotsByDay = {};
+
+    for (final slot in slots) {
+      final day = slot.day.trim();
+
+      if (day.isEmpty) {
+        continue;
+      }
+
+      slotsByDay.putIfAbsent(
+        day,
+            () => [],
+      );
+
+      slotsByDay[day]!.add(slot);
+    }
+
+    /*
+     * ============================================================
+     * RÉCUPÉRER LE NOM DE L'EMPLOI DU TEMPS
+     * ============================================================
+     */
+
+    String? timetableName;
+
+    if (payloadMap != null &&
+        payloadMap["timetable"] is Map) {
+      final timetableInfo =
+      Map<String, dynamic>.from(
+        payloadMap["timetable"] as Map,
+      );
+
+      timetableName =
+          timetableInfo["name"]?.toString();
+    }
+
+    /*
+     * ============================================================
+     * CONSTRUIRE LE MODÈLE FINAL
+     * ============================================================
+     */
+
     return TimetableData(
-      studentId: int.tryParse(student?["id"]?.toString() ?? '') ?? 0,
-      studentName: student?["name"]?.toString() ?? "",
-      timetable: slotsByDay.entries
-          .map((entry) => TimetableDay(day: entry.key, slots: entry.value))
-          .toList(),
-      timetableName: timetableInfo?["name"]?.toString(),
+      /*
+       * L'ID peut être présent dans "student".
+       */
+
+      studentId:
+      _asInt(
+        student?["id"],
+      ),
+
+      /*
+       * Nom de l'élève.
+       */
+
+      studentName:
+      student?["name"]?.toString() ?? "",
+
+      /*
+       * Les créneaux sont maintenant regroupés par jour.
+       */
+
+      timetable:
+      slotsByDay.entries.map(
+            (entry) {
+          return TimetableDay(
+            day: entry.key,
+            slots: entry.value,
+          );
+        },
+      ).toList(),
+
+      timetableName: timetableName,
     );
   }
 }
+
+// ============================================================================
+// PAIEMENT
+// ============================================================================
 
 class Paiement {
   final int invoiceId;
@@ -282,145 +691,286 @@ class Paiement {
     this.dueDate,
   });
 
+  factory Paiement.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    final fee =
+    json["fee_id"] is List
+        ? json["fee_id"] as List
+        : null;
 
-  factory Paiement.fromJson(Map<String, dynamic> json) {
-    final fee = json['fee_id'] as List?;
     return Paiement(
-      // Les deux conventions sont supportées pour garder l'application
-      // compatible avec les réponses Odoo et les anciennes maquettes API.
-      invoiceId: _asInt(json["id"] ?? json["invoice_id"]),
-      invoiceNumber: json["name"]?.toString() ??
-          json["invoice_number"]?.toString() ?? "",
-      feeName: fee != null && fee.length > 1
+      invoiceId:
+      _asInt(
+        json["id"] ??
+            json["invoice_id"],
+      ),
+
+      invoiceNumber:
+      json["name"]?.toString() ??
+          json["invoice_number"]?.toString() ??
+          "",
+
+      feeName:
+      fee != null && fee.length > 1
           ? fee[1].toString()
-          : json["fee_name"]?.toString() ?? "Facture scolaire",
-      amount: _asDouble(json["amount_total"] ?? json["amount"]),
-      residual: _asDouble(json["amount_residual"] ?? json["residual"]),
-      paymentState: json["payment_state"]?.toString() ?? "",
-      // Les factures brouillon n'ont pas toujours de date : le modèle reste
-      // affichable au lieu de faire échouer le tableau de bord.
-      invoiceDate: DateTime.tryParse(
-            json["invoice_date"]?.toString() ?? '',
-          ) ??
-          DateTime.fromMillisecondsSinceEpoch(0),
-      dueDate: json["invoice_date_due"] != null
-          ? DateTime.tryParse(json["invoice_date_due"].toString())
+          : json["fee_name"]?.toString() ??
+          "Facture scolaire",
+
+      amount:
+      _asDouble(
+        json["amount_total"] ??
+            json["amount"],
+      ),
+
+      residual:
+      _asDouble(
+        json["amount_residual"] ??
+            json["residual"],
+      ),
+
+      paymentState:
+      json["payment_state"]?.toString() ??
+          "",
+
+      invoiceDate:
+      DateTime.tryParse(
+        json["invoice_date"]?.toString() ??
+            "",
+      ) ??
+          DateTime.fromMillisecondsSinceEpoch(
+            0,
+          ),
+
+      dueDate:
+      json["invoice_date_due"] != null
+          ? DateTime.tryParse(
+        json["invoice_date_due"].toString(),
+      )
           : json["due_date"] != null
-              ? DateTime.tryParse(json["due_date"].toString())
+          ? DateTime.tryParse(
+        json["due_date"].toString(),
+      )
           : null,
     );
   }
 
-  bool get isPaid => paymentState == "paid";
+  bool get isPaid =>
+      paymentState == "paid";
 
   bool get isUnpaid =>
-      const {'unpaid', 'not_paid', 'in_payment'}.contains(paymentState);
+      const {
+        "unpaid",
+        "not_paid",
+        "in_payment",
+      }.contains(paymentState);
 
-  bool get isPartial => paymentState == "partial";
+  bool get isPartial =>
+      paymentState == "partial";
 }
 
-int _asInt(dynamic value) => int.tryParse(value?.toString() ?? '') ?? 0;
-
-double _asDouble(dynamic value) =>
-    value is num ? value.toDouble() : double.tryParse(value?.toString() ?? '') ?? 0;
+// ============================================================================
+// HEALTH CHECK
+// ============================================================================
 
 class HealthCheckResult {
-final String status;
-final String database;
-final String odoo;
-final String message;
+  final String status;
 
-const HealthCheckResult({
-required this.status,
-required this.database,
-required this.odoo,
-required this.message,
-});
+  final String database;
 
-factory HealthCheckResult.fromJson(Map<String, dynamic> json) {
-return HealthCheckResult(
-status: json['status'] ?? 'error',
-database: json['database'] ?? 'error',
-odoo: json['odoo'] ?? 'error',
-message: json['message'] ?? '',
-);
+  final String odoo;
+
+  final String message;
+
+  const HealthCheckResult({
+    required this.status,
+    required this.database,
+    required this.odoo,
+    required this.message,
+  });
+
+  factory HealthCheckResult.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    return HealthCheckResult(
+      status:
+      json["status"]?.toString() ??
+          "error",
+
+      database:
+      json["database"]?.toString() ??
+          "error",
+
+      odoo:
+      json["odoo"]?.toString() ??
+          "error",
+
+      message:
+      json["message"]?.toString() ??
+          "",
+    );
+  }
+
+  bool get isHealthy =>
+      status == "ok";
+
+  bool get isDatabaseOk =>
+      database == "ok";
+
+  bool get isOdooOk =>
+      odoo == "ok";
 }
 
-bool get isHealthy => status == 'ok';
-bool get isDatabaseOk => database == 'ok';
-bool get isOdooOk => odoo == 'ok';
-}
+// ============================================================================
+// DASHBOARD ENFANT
+// ============================================================================
 
 class ChildDashboard {
   final List<AbsenceEntry> absences;
+
   final List<GradeEntry> grades;
+
   final List<Paiement> payments;
+
   final TimetableData timetable;
 
   const ChildDashboard({
     this.absences = const [],
     this.grades = const [],
     this.payments = const [],
+
     this.timetable = const TimetableData(
       studentId: 0,
       studentName: "",
       timetable: [],
     ),
   });
-  double get totalAPayer =>
-      payments.fold(
-        0,
-            (sum, paiement) => sum + paiement.residual,
-      );
+
+  // --------------------------------------------------------------------------
+  // TOTAL À PAYER
+  // --------------------------------------------------------------------------
+
+  double get totalAPayer {
+    return payments.fold(
+      0,
+          (sum, paiement) {
+        return sum + paiement.residual;
+      },
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // TOTAL HEURES D'ABSENCE
+  // --------------------------------------------------------------------------
 
   double get totalHeuresAbsentes {
     double total = 0;
-    for (var absence in absences) {
-      if (absence.isAbsent && absence.endDate != null) {
-        total += absence.endDate!.difference(absence.startDate).inMinutes / 60.0;
+
+    for (final absence in absences) {
+      if (absence.isAbsent &&
+          absence.endDate != null) {
+        total +=
+            absence.endDate!
+                .difference(
+              absence.startDate,
+            )
+                .inMinutes /
+                60.0;
       }
     }
+
     return total;
   }
 
-  /// Retourne le nombre total de jours d'absence (entrées marquées 'absent')
-  int get totalJoursAbsents => absences.where((e) => e.isAbsent).length;
+  // --------------------------------------------------------------------------
+  // TOTAL JOURS D'ABSENCE
+  // --------------------------------------------------------------------------
 
-  /// Retourne le nombre total de retards
-  int get totalRetards => absences.where((e) => e.isLate).length;
+  int get totalJoursAbsents {
+    return absences
+        .where(
+          (e) => e.isAbsent,
+    )
+        .length;
+  }
 
-  /// Calcule les statistiques pour le mois en cours
+  // --------------------------------------------------------------------------
+  // TOTAL RETARDS
+  // --------------------------------------------------------------------------
+
+  int get totalRetards {
+    return absences
+        .where(
+          (e) => e.isLate,
+    )
+        .length;
+  }
+
+  // --------------------------------------------------------------------------
+  // STATISTIQUES DU MOIS
+  // --------------------------------------------------------------------------
+
   Map<String, dynamic> get statsMoisEnCours {
     final now = DateTime.now();
-    final moisAbsences = absences.where((e) => e.startDate.month == now.month && e.startDate.year == now.year).toList();
-    
+
+    final moisAbsences =
+    absences.where(
+          (e) =>
+      e.startDate.month ==
+          now.month &&
+          e.startDate.year ==
+              now.year,
+    ).toList();
+
     double heures = 0;
+
     int jours = 0;
+
     int retards = 0;
 
-    for (var a in moisAbsences) {
-      if (a.isAbsent) {
+    for (final absence in moisAbsences) {
+      if (absence.isAbsent) {
         jours++;
-        if (a.endDate != null) {
-          heures += a.endDate!.difference(a.startDate).inMinutes / 60.0;
+
+        if (absence.endDate != null) {
+          heures +=
+              absence.endDate!
+                  .difference(
+                absence.startDate,
+              )
+                  .inMinutes /
+                  60.0;
         }
-      } else if (a.isLate) {
+      } else if (absence.isLate) {
         retards++;
       }
     }
 
     return {
-      'heures': heures,
-      'jours': jours,
-      'retards': retards,
+      "heures": heures,
+      "jours": jours,
+      "retards": retards,
     };
   }
 
-  static const empty = ChildDashboard();
+  // --------------------------------------------------------------------------
+  // DASHBOARD VIDE
+  // --------------------------------------------------------------------------
 
-  factory ChildDashboard.fromJson(Map<String, dynamic> json) {
+  static const empty =
+  ChildDashboard();
+
+  // --------------------------------------------------------------------------
+  // FROM JSON
+  // --------------------------------------------------------------------------
+
+  factory ChildDashboard.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return ChildDashboard(
-      absences: (json["absences"] as List<dynamic>? ?? [])
+      absences:
+      (json["absences"] as List? ?? [])
+          .whereType<Map>()
           .map(
             (e) => AbsenceEntry.fromJson(
           Map<String, dynamic>.from(e),
@@ -428,7 +978,9 @@ class ChildDashboard {
       )
           .toList(),
 
-      grades: (json["grades"] as List<dynamic>? ?? [])
+      grades:
+      (json["grades"] as List? ?? [])
+          .whereType<Map>()
           .map(
             (e) => GradeEntry.fromJson(
           Map<String, dynamic>.from(e),
@@ -436,7 +988,9 @@ class ChildDashboard {
       )
           .toList(),
 
-      payments: (json["payments"] as List<dynamic>? ?? [])
+      payments:
+      (json["payments"] as List? ?? [])
+          .whereType<Map>()
           .map(
             (e) => Paiement.fromJson(
           Map<String, dynamic>.from(e),
@@ -444,9 +998,12 @@ class ChildDashboard {
       )
           .toList(),
 
-      timetable: json["timetable"] != null
+      timetable:
+      json["timetable"] != null
           ? TimetableData.fromJson(
-        Map<String, dynamic>.from(json["timetable"]),
+        Map<String, dynamic>.from(
+          json["timetable"],
+        ),
       )
           : const TimetableData(
         studentId: 0,
@@ -457,3 +1014,50 @@ class ChildDashboard {
   }
 }
 
+// ============================================================================
+// UTILITAIRES
+// ============================================================================
+
+int _asInt(dynamic value) {
+  if (value is int) {
+    return value;
+  }
+
+  if (value is double) {
+    return value.toInt();
+  }
+
+  return int.tryParse(
+    value?.toString() ?? "",
+  ) ??
+      0;
+}
+
+int? _nullableInt(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+
+  if (value is int) {
+    return value;
+  }
+
+  if (value is double) {
+    return value.toInt();
+  }
+
+  return int.tryParse(
+    value.toString(),
+  );
+}
+
+double _asDouble(dynamic value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  return double.tryParse(
+    value?.toString() ?? "",
+  ) ??
+      0;
+}

@@ -21,12 +21,25 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
+  final StorageService _storageService = StorageService();
   late Future<UserModel> _profileFuture;
+  bool _passwordChangeUsed = false;
 
   @override
   void initState() {
     super.initState();
-    _profileFuture = _authService.getProfile();
+    _profileFuture = _loadProfile();
+  }
+
+  Future<UserModel> _loadProfile() async {
+    final profile = await _authService.getProfile();
+    final usedLocally = await _storageService.hasChangedPasswordOnce(profile.id);
+    if (mounted) {
+      setState(() {
+        _passwordChangeUsed = profile.passwordChangedOnce || usedLocally;
+      });
+    }
+    return profile;
   }
 
   static const Color primaryBlue = Color(0xFF0D47A1);
@@ -40,6 +53,151 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
     );
+  }
+
+  Future<void> _showChangePasswordDialog() async {
+    if (_passwordChangeUsed) return;
+
+    final formKey = GlobalKey<FormState>();
+    final currentPassword = TextEditingController();
+    final newPassword = TextEditingController();
+    final confirmPassword = TextEditingController();
+    final isFrench = Localizations.localeOf(context).languageCode == 'fr';
+    var isSaving = false;
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: Text(isFrench ? 'Changer le mot de passe' : 'Change password'),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isFrench
+                          ? 'Cette modification ne peut être faite qu’une seule fois.'
+                          : 'You can change your password only once.',
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: currentPassword,
+                      obscureText: true,
+                      autofillHints: const [AutofillHints.password],
+                      decoration: InputDecoration(
+                        labelText: isFrench ? 'Mot de passe actuel' : 'Current password',
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? (isFrench ? 'Champ obligatoire' : 'Required field')
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: newPassword,
+                      obscureText: true,
+                      autofillHints: const [AutofillHints.newPassword],
+                      decoration: InputDecoration(
+                        labelText: isFrench ? 'Nouveau mot de passe' : 'New password',
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? (isFrench ? 'Champ obligatoire' : 'Required field')
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: confirmPassword,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: isFrench ? 'Confirmer le mot de passe' : 'Confirm password',
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return isFrench ? 'Champ obligatoire' : 'Required field';
+                        }
+                        if (value != newPassword.text) {
+                          return isFrench
+                              ? 'Les mots de passe ne correspondent pas.'
+                              : 'Passwords do not match.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                child: Text(isFrench ? 'Annuler' : 'Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        if (!(formKey.currentState?.validate() ?? false)) return;
+                        setDialogState(() => isSaving = true);
+                        try {
+                          await _authService.changePassword(
+                            currentPassword: currentPassword.text,
+                            newPassword: newPassword.text,
+                            confirmPassword: confirmPassword.text,
+                          );
+                          final profile = await _profileFuture;
+                          await _storageService.markPasswordChangedOnce(profile.id);
+                          if (!mounted) return;
+                          setState(() => _passwordChangeUsed = true);
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text(isFrench
+                                  ? 'Mot de passe modifié avec succès.'
+                                  : 'Password changed successfully.'),
+                            ),
+                          );
+                        } catch (error) {
+                          final message = error.toString().replaceFirst('Exception: ', '');
+                          final lowerMessage = message.toLowerCase();
+                          if (lowerMessage.contains('déjà') ||
+                              lowerMessage.contains('already') ||
+                              lowerMessage.contains('once')) {
+                            final profile = await _profileFuture;
+                            await _storageService.markPasswordChangedOnce(profile.id);
+                            if (mounted) setState(() => _passwordChangeUsed = true);
+                            if (dialogContext.mounted) Navigator.pop(dialogContext);
+                          } else if (dialogContext.mounted) {
+                            setDialogState(() => isSaving = false);
+                          }
+                          if (mounted) {
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              SnackBar(content: Text(message)),
+                            );
+                          }
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(isFrench ? 'Enregistrer' : 'Save'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      currentPassword.dispose();
+      newPassword.dispose();
+      confirmPassword.dispose();
+    }
   }
 
   @override
@@ -240,7 +398,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         SizedBox(width: 5),
                         Text(
-                          profile?.role == true ? 'Enseignant' : 'Parent',
+                          profile?.isTeacher == true
+                              ? 'Enseignant'
+                              : 'Parent',
                           style: TextStyle(
                             color: primaryBlue,
                             fontWeight: FontWeight.bold,
@@ -510,8 +670,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Divider(height: 1, color: Colors.grey.shade200, indent: 56),
               _accountTile(
                 Icons.lock_outline,
-                l10n.changePassword,
-                onTap: () {},
+                _passwordChangeUsed
+                    ? (Localizations.localeOf(context).languageCode == 'fr'
+                        ? 'Mot de passe déjà modifié'
+                        : 'Password already changed')
+                    : l10n.changePassword,
+                iconColor: _passwordChangeUsed ? Colors.grey : primaryBlue,
+                textColor: _passwordChangeUsed ? Colors.grey : Colors.black87,
+                enabled: !_passwordChangeUsed,
+                onTap: _showChangePasswordDialog,
               ),
               Divider(height: 1, color: Colors.grey.shade200, indent: 56),
               _accountTile(
@@ -533,10 +700,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String label, {
     Color iconColor = primaryBlue,
     Color textColor = Colors.black87,
+    bool enabled = true,
     required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
@@ -553,7 +721,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey.shade400),
+            if (enabled) Icon(Icons.chevron_right, color: Colors.grey.shade400),
           ],
         ),
       ),

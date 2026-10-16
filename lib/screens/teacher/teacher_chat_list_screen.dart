@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:novaschool/screens/teacher/teacher_main_screen.dart';
 
 import '../../services/teacher_service.dart';
 import '../../widgets/teacher/teacher_ui.dart';
@@ -48,7 +49,7 @@ class _TeacherChatListScreenState
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => const TeacherHomeScreen(),
+            builder: (_) => const TeacherMainScreen(),
           ),
               (_) => false,
         );
@@ -165,16 +166,8 @@ class _TeacherChatListScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TeacherUi.canvas,
+      backgroundColor: TeacherUi.canvasColor(context),
 
-      // ----------------------------------------------------------
-      // NAVIGATION DU BAS
-      // ----------------------------------------------------------
-
-      bottomNavigationBar: TeacherBottomNav(
-        currentIndex: 1,
-        onTap: _navigate,
-      ),
 
       // ----------------------------------------------------------
       // CONTENU
@@ -214,9 +207,9 @@ class _TeacherChatListScreenState
             onPressed: () {
               Navigator.pop(context);
             },
-            icon: const Icon(
+            icon: Icon(
               Icons.menu_rounded,
-              color: TeacherUi.ink,
+              color: TeacherUi.inkColor(context),
             ),
           ),
 
@@ -226,11 +219,11 @@ class _TeacherChatListScreenState
           // TITRE
           // ------------------------------------------------------
 
-          const Text(
+          Text(
             'Parents',
             style: TextStyle(
               fontSize: 19,
-              color: TeacherUi.ink,
+              color: TeacherUi.inkColor(context),
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -272,6 +265,10 @@ class _TeacherChatListScreenState
   // ============================================================
 
   Widget _buildSearchField() {
+    final cardBg = Theme.of(context).cardColor;
+    final lineCol = TeacherUi.lineColor(context);
+    final mutedCol = TeacherUi.mutedColor(context);
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: TextField(
@@ -279,33 +276,33 @@ class _TeacherChatListScreenState
         decoration: InputDecoration(
           hintText: 'Rechercher un message...',
 
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
             fontSize: 12,
-            color: TeacherUi.muted,
+            color: mutedCol,
           ),
 
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search,
             size: 20,
-            color: TeacherUi.muted,
+            color: mutedCol,
           ),
 
           filled: true,
-          fillColor: Colors.white,
+          fillColor: cardBg,
 
           contentPadding: EdgeInsets.zero,
 
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: TeacherUi.line,
+            borderSide: BorderSide(
+              color: lineCol,
             ),
           ),
 
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: TeacherUi.line,
+            borderSide: BorderSide(
+              color: lineCol,
             ),
           ),
 
@@ -401,9 +398,9 @@ class _TeacherChatListScreenState
                 context,
                 index,
                 ) {
-              return const Divider(
+              return Divider(
                 height: 1,
-                color: TeacherUi.line,
+                color: TeacherUi.lineColor(context),
               );
             },
 
@@ -462,7 +459,7 @@ class _TeacherChatListScreenState
   // ============================================================
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment:
         MainAxisAlignment.center,
@@ -470,25 +467,25 @@ class _TeacherChatListScreenState
           Icon(
             Icons.chat_bubble_outline_rounded,
             size: 45,
-            color: TeacherUi.muted,
+            color: TeacherUi.mutedColor(context),
           ),
 
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           Text(
             'Aucune conversation trouvée',
             style: TextStyle(
-              color: TeacherUi.ink,
+              color: TeacherUi.inkColor(context),
               fontWeight: FontWeight.w700,
             ),
           ),
 
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
 
           Text(
             'Essayez une autre recherche.',
             style: TextStyle(
-              color: TeacherUi.muted,
+              color: TeacherUi.mutedColor(context),
               fontSize: 12,
             ),
           ),
@@ -573,10 +570,10 @@ class _Conversation extends StatelessWidget {
                     overflow:
                     TextOverflow.ellipsis,
 
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: TeacherUi.ink,
+                      color: TeacherUi.inkColor(context),
                     ),
                   ),
 
@@ -589,9 +586,9 @@ class _Conversation extends StatelessWidget {
                     overflow:
                     TextOverflow.ellipsis,
 
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: TeacherUi.muted,
+                      color: TeacherUi.mutedColor(context),
                     ),
                   ),
                 ],
@@ -612,9 +609,9 @@ class _Conversation extends StatelessWidget {
                 Text(
                   time,
 
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: TeacherUi.muted,
+                    color: TeacherUi.mutedColor(context),
                   ),
                 ),
 

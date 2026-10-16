@@ -6,6 +6,7 @@ class UserModel {
   final String? phone;
   final String? avatar;
   final String? role; // "parent" ou "teacher"
+  final bool passwordChangedOnce;
 
   UserModel({
     required this.id,
@@ -14,6 +15,7 @@ class UserModel {
     required this.phone,
     required this.avatar,
     this.role,
+    this.passwordChangedOnce = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -39,6 +41,7 @@ class UserModel {
       phone: json['phone']?.toString() ?? json['telephone']?.toString(),
       avatar: json['avatar']?.toString() ?? json['photo']?.toString(),
       role: json['role']?.toString(),
+      passwordChangedOnce: json['password_changed_once'] == true,
     );
   }
 

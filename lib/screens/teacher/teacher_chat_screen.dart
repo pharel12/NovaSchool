@@ -32,13 +32,14 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
   Future<void> _loadMessages() async {
     try {
       final messages = await _teacherService.getMessages(widget.conversationId);
+      if (!mounted) return;
       setState(() {
         _messages = messages;
         _isLoading = false;
       });
       _scrollToBottom();
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -63,6 +64,7 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
       await _teacherService.sendMessage(widget.conversationId, content);
       _loadMessages();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erreur lors de l\'envoi du message')),
       );
@@ -89,24 +91,52 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
                     itemBuilder: (context, index) {
                       final msg = _messages[index];
                       final isMe = msg['sender_type'] == 'teacher';
+                      final messageSender = msg['sender_name']?.toString().trim();
+                      final senderName = messageSender != null && messageSender.isNotEmpty
+                          ? messageSender
+                          : (isMe ? 'Vous' : widget.parentName);
+
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
+                      final otherBg = isDark ? const Color(0xFF2C324B) : Colors.grey.shade200;
+                      final otherText = isDark ? Colors.white : Colors.black87;
 
                       return Align(
                         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.sizeOf(context).width * 0.82,
+                          ),
+                          child: Container(
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                           decoration: BoxDecoration(
-                            color: isMe ? AppColors.primary : Colors.grey.shade200,
+                            color: isMe ? AppColors.primary : otherBg,
                             borderRadius: BorderRadius.circular(15).copyWith(
                               bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(15),
                               bottomLeft: !isMe ? const Radius.circular(0) : const Radius.circular(15),
                             ),
                           ),
-                          child: Text(
-                            msg['content'],
-                            style: TextStyle(
-                              color: isMe ? Colors.white : Colors.black87,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (!isMe) ...[
+                                Text(
+                                  senderName,
+                                  style: TextStyle(
+                                    color: isMe ? Colors.white70 : AppColors.primary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                              ],
+                              Text(
+                                msg['content']?.toString() ?? '',
+                                style: TextStyle(color: isMe ? Colors.white : otherText),
+                              ),
+                            ],
+                          ),
                           ),
                         ),
                       );

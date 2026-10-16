@@ -26,7 +26,7 @@ class ApiClient {
           'Authorization': 'Bearer $authToken',
           'Content-Type': 'application/json',
         },
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(const Duration(seconds: 60));
     });
   }
 
@@ -74,7 +74,7 @@ class ApiClient {
           "Content-Type": "application/json",
         },
         body: jsonEncode(body ?? {}),
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(const Duration(seconds: 60));
     });
   }
 }

@@ -6,96 +6,186 @@ import 'package:novaschool/services/child_service.dart';
 import 'child_card.dart';
 
 class ChildList extends StatefulWidget {
-  const ChildList({super.key});
+  const ChildList({
+    super.key,
+  });
 
   @override
-  State<ChildList> createState() => _ChildListState();
+  State<ChildList> createState() =>
+      _ChildListState();
 }
 
-class _ChildListState extends State<ChildList> {
-  final ChildService _service = ChildService();
+class _ChildListState
+    extends State<ChildList> {
+  final ChildService _service =
+  ChildService();
 
-  late Future<List<ChildModel>> _futureChildren;
+  late Future<List<ChildModel>>
+  _futureChildren;
 
   int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    // ApiClient lit le JWT depuis le stockage sécurisé : le widget n'expose
-    // donc jamais le token à l'interface.
-    _futureChildren = _service.getChildren();
+
+    _futureChildren =
+        _service.getChildren();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<ChildModel>>(
+    return FutureBuilder<
+        List<ChildModel>>(
       future: _futureChildren,
-      builder: (context, snapshot) {
-        // Chargement
-        if (snapshot.connectionState == ConnectionState.waiting) {
+
+      builder:
+          (context, snapshot) {
+        // ======================================================
+        // CHARGEMENT
+        // ======================================================
+
+        if (snapshot.connectionState ==
+            ConnectionState.waiting) {
           return const SizedBox(
-            height: 220,
+            height: 200,
             child: Center(
-              child: CircularProgressIndicator(),
+              child:
+              CircularProgressIndicator(),
             ),
           );
         }
 
-        // Erreur
+        // ======================================================
+        // ERREUR
+        // ======================================================
+
         if (snapshot.hasError) {
           return SizedBox(
-            height: 220,
+            height: 200,
+
             child: Center(
-              child: Text(
-                snapshot.error.toString(),
-                style: const TextStyle(color: Colors.red),
+              child: Padding(
+                padding:
+                const EdgeInsets.all(
+                  16,
+                ),
+
+                child: Text(
+                  snapshot.error
+                      .toString(),
+
+                  textAlign:
+                  TextAlign.center,
+
+                  style:
+                  const TextStyle(
+                    color: Colors.red,
+                  ),
+                ),
               ),
             ),
           );
         }
 
-        final children = snapshot.data ?? [];
+        final children =
+            snapshot.data ?? [];
 
-        // Aucun enfant
+        // ======================================================
+        // AUCUN ENFANT
+        // ======================================================
+
         if (children.isEmpty) {
-          return const SizedBox(
-            height: 220,
-            child: Center(
+          return Container(
+            height: 150,
+
+            width: double.infinity,
+
+            decoration:
+            BoxDecoration(
+              color: Colors.white,
+              borderRadius:
+              BorderRadius.circular(
+                16,
+              ),
+            ),
+
+            child: const Center(
               child: Text(
                 "Aucun enfant trouvé",
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey,
+                ),
               ),
             ),
           );
         }
 
-        // Liste des cartes
+        // ======================================================
+        // LISTE HORIZONTALE
+        // ======================================================
+
         return SizedBox(
-          height: 220,
+          height: 198,
+
           child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: children.length,
-            padding: EdgeInsets.zero,
-            itemBuilder: (context, index) {
-              final child = children[index];
+            scrollDirection:
+            Axis.horizontal,
+
+            physics:
+            const BouncingScrollPhysics(),
+
+            itemCount:
+            children.length,
+
+            padding:
+            const EdgeInsets.only(
+              right: 8,
+            ),
+
+            itemBuilder:
+                (context, index) {
+              final child =
+              children[index];
 
               return Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding:
+                const EdgeInsets.only(
+                  right: 12,
+                ),
+
                 child: ChildCard(
-                  initials: child.initials,
-                  name: child.fullName,
-                  classroom: child.classroom,
-                  isPresent: child.isPresent,
-                  selected: _selectedIndex == index,
+                  initials:
+                  child.initials,
+
+                  name:
+                  child.fullName,
+
+                  classroom:
+                  child.classroom,
+
+                  isPresent:
+                  child.isPresent,
+
+                  selected:
+                  _selectedIndex ==
+                      index,
+
                   onTap: () {
                     setState(() {
-                      _selectedIndex = index;
+                      _selectedIndex =
+                          index;
                     });
+
                     Navigator.push(
                       context,
+
                       MaterialPageRoute(
-                        builder: (_) => ChildProfileScreen(child: child,),
+                        builder: (_) =>
+                            ChildProfileScreen(
+                              child: child,
+                            ),
                       ),
                     );
                   },
